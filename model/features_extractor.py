@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torchsummary import summary
-
+import torch.nn.functional as F
 
 
 # print(model.conv1)
@@ -16,22 +16,17 @@ class FeatureExtractor(nn.Module):
             model.bn1,
             model.relu,
             model.maxpool,
-            model.layer1,
+            model.layer1,   
             model.layer2,
-            # model.layer3,
-            # model.layer4
         )
-        # summary(self.conv4, (1024, 20, 20))
     def forward(self, x):
         x = self.conv1(x)
         x = self.forward_path(x)
-        return x
+        return F.log_softmax(x)
 
 
 if __name__ == "__main__":
     model = FeatureExtractor()
     # model = torch.hub.load('pytorch/vision', 'resnext50_32x4d', pretrained=True)
     # print(model)
-    # for layer in model.modules():
-    #     print(layer.__dir__())
     summary(model, (3, 320, 320), depth=5)
