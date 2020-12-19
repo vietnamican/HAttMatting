@@ -20,9 +20,9 @@ class FeatureExtractor(nn.Module):
             model.layer2,
         )
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.forward_path(x)
-        return F.log_softmax(x)
+        low_level_feature = self.conv1(x)
+        high_level_feature = self.forward_path(low_level_feature)
+        return low_level_feature, high_level_feature
 
 
 if __name__ == "__main__":

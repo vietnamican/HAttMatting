@@ -56,20 +56,24 @@ def test(loader, model):
             test_loss, correct, len(test_loader.dataset),
             100. * correct / len(test_loader.dataset)))
 
+# if __name__ == '__main__':
+#     model = Model()
+#     # summary(model, (3, 320, 320), depth=6)
+#     train_loader = DataLoader(HADataset('train'), batch_size=24, shuffle=True)
+#     test_loader = DataLoader(HADataset('test'), batch_size=24, shuffle=False)
+#     # test(test_loader, model)
+#     optimizer = optim.Adam(model.parameters())
+#     total_training_time = 0
+#     n_epochs = 2
+#     for epoch in range(1, n_epochs + 1):
+#         start = time()
+#         train(epoch, n_epochs, train_loader, model, optimizer)
+#         end = time()
+#         print('\nTraning process takes {} seconds'.format(end - start))
+#         total_training_time += end - start
+#         test(test_loader, model)
+#     # print('Total traning process takes {} seconds'.format(total_training_time))
+
 if __name__ == '__main__':
     model = Model()
-    # summary(model, (3, 320, 320), depth=6)
-    train_loader = DataLoader(HADataset('train'), batch_size=24, shuffle=True)
-    test_loader = DataLoader(HADataset('test'), batch_size=24, shuffle=False)
-    # test(test_loader, model)
-    optimizer = optim.Adam(model.parameters())
-    total_training_time = 0
-    n_epochs = 2
-    for epoch in range(1, n_epochs + 1):
-        start = time()
-        train(epoch, n_epochs, train_loader, model, optimizer)
-        end = time()
-        print('\nTraning process takes {} seconds'.format(end - start))
-        total_training_time += end - start
-        test(test_loader, model)
-    # print('Total traning process takes {} seconds'.format(total_training_time))
+    summary(model, (3, 320, 320))
