@@ -76,4 +76,4 @@ from model import Model
 
 if __name__ == '__main__':
     model = Model()
-    summary(model, (3, 320, 320))
+    summary(model, (3, 320, 320), depth=4)
