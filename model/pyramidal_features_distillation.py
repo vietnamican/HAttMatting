@@ -18,7 +18,7 @@ class PyramidalFeaturesDistillation(nn.Module):
 
     def forward(self, x):
         x = self.up(x)
-        x = self.channel_wise_attention(x)
+        x, alpha = self.channel_wise_attention(x)
         # x = self.inner_channel_attention(x)
         # x = self.inter_channel_attention(x)
         return x

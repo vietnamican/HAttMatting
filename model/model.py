@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
 from torchsummary import summary
+
 from .features_extractor import FeatureExtractor
 from .aspp import ASPP
 from .pyramidal_features_distillation import PyramidalFeaturesDistillation
+from .visualization import Visualization
 
 
 class Model(nn.Module):
@@ -12,12 +14,14 @@ class Model(nn.Module):
         self.features_extractor = FeatureExtractor()
         self.aspp = ASPP(512, 16, nn.BatchNorm2d)
         self.pyramidal_features_distillation = PyramidalFeaturesDistillation()
+        self.visualization = Visualization()
 
     def forward(self, x):
         low_level_feature, high_level_feature = self.features_extractor(x)
         x = self.aspp(high_level_feature)
         x = self.pyramidal_features_distillation(x)
-        return x
+        visualize = self.visualization(x)
+        return x, visualize
 
 
 if __name__ == '__main__':
