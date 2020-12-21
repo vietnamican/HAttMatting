@@ -40,10 +40,15 @@ class SpatialAttention(nn.Module):
         att = self.tanh((torch.matmul(V_map, self.Ws) + self.bs))
         alpha = self.softmax(torch.matmul(att, self.Wi) + self.bi)
         alpha = alpha.squeeze(2)
-        feature_map = feature_map.view(
+        print('alpha: ', alpha.shape)
+        temp_feature_map = feature_map.view(
             feature_map.shape[0], feature_map.shape[1], -1)
+        print('feature_map: ', temp_feature_map.shape)
         temp_alpha = alpha.unsqueeze(1)
-        attention_weighted_encoding = torch.mul(feature_map, temp_alpha)
+        print('temp_alpha: ', temp_alpha.shape)
+        attention_weighted_encoding = torch.mul(temp_feature_map, temp_alpha)
+        print('attention_weighted_encoding: ', attention_weighted_encoding.shape)
+        attention_weighted_encoding = attention_weighted_encoding.view(feature_map.shape)
         return attention_weighted_encoding, alpha
 
 
@@ -102,4 +107,4 @@ class ChannelWiseAttention(nn.Module):
 
 if __name__ == "__main__":
     model = SpatialAttention(256)
-    summary(model, (256, 10, 10))
+    summary(model, (256, 160, 160))

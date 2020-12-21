@@ -8,11 +8,58 @@ from torch.utils.data.dataloader import DataLoader
 import torch.nn.functional as F
 import torch.optim as optim
 
-from model import Model
-# from dataloader import HADataset
+from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, get_learning_rate, \
+    alpha_prediction_loss, adjust_learning_rate
+from config import device, im_size, grad_clip, print_freq
 
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# print('Using device {}'.format(device))
+from model import Model
+from data import HADataset
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print('Using device {}'.format(device))
+
+def train(train_loader, model, optimizer, epoch, logger):
+    model.train()  # train mode (dropout and batchnorm is used)
+
+    losses = AverageMeter()
+
+    # Batches
+    for i, (img, alpha_label) in enumerate(train_loader):
+        # Move to GPU, if available
+        img = img.type(torch.FloatTensor).to(device)  # [N, 4, 320, 320]
+        alpha_label = alpha_label.type(torch.FloatTensor).to(device)  # [N, 320, 320]
+        alpha_label = alpha_label.unsqueeze(1)
+        # alpha_label = alpha_label.reshape((-1, 2, im_size * im_size))  # [N, 320*320]
+
+        # Forward prop.
+        alpha_out = model(img)  # [N, 3, 320, 320]
+        # alpha_out = alpha_out.reshape((-1, 1, im_size * im_size))  # [N, 320*320]
+
+        # Calculate loss
+        # loss = criterion(alpha_out, alpha_label)
+        loss = alpha_prediction_loss(alpha_out, alpha_label)
+
+        # Back prop.
+        optimizer.zero_grad()
+        loss.backward()
+
+        # Clip gradients
+        clip_gradient(optimizer, grad_clip)
+
+        # Update weights
+        optimizer.step()
+
+        # Keep track of metrics
+        losses.update(loss.item())
+
+        # Print status
+
+        if i % print_freq == 0:
+            status = 'Epoch: [{0}][{1}/{2}]\t' \
+                     'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(epoch, i, len(train_loader), loss=losses)
+            logger.info(status)
+
+    return losses.avg
 
 # def train(epoch, total_epoch, loader, model, optimizer, log_interval=1):
 #     train_losses = []
@@ -56,24 +103,25 @@ from model import Model
 #             test_loss, correct, len(test_loader.dataset),
 #             100. * correct / len(test_loader.dataset)))
 
-# if __name__ == '__main__':
-#     model = Model()
-#     # summary(model, (3, 320, 320), depth=6)
-#     train_loader = DataLoader(HADataset('train'), batch_size=24, shuffle=True)
-#     test_loader = DataLoader(HADataset('test'), batch_size=24, shuffle=False)
-#     # test(test_loader, model)
-#     optimizer = optim.Adam(model.parameters())
-#     total_training_time = 0
-#     n_epochs = 2
-#     for epoch in range(1, n_epochs + 1):
-#         start = time()
-#         train(epoch, n_epochs, train_loader, model, optimizer)
-#         end = time()
-#         print('\nTraning process takes {} seconds'.format(end - start))
-#         total_training_time += end - start
-#         test(test_loader, model)
-#     # print('Total traning process takes {} seconds'.format(total_training_time))
-
 if __name__ == '__main__':
     model = Model()
-    summary(model, (3, 320, 320), depth=4)
+    # summary(model, (3, 320, 320), depth=6)
+    train_loader = DataLoader(HADataset('train'), batch_size=4, shuffle=True)
+    # test_loader = DataLoader(HADataset('test'), batch_size=4, shuffle=False)
+    # test(test_loader, model)
+    optimizer = optim.Adam(model.parameters())
+    total_training_time = 0
+    n_epochs = 2
+    logger = get_logger()
+    for epoch in range(1, n_epochs + 1):
+        start = time()
+        train(train_loader, model, optimizer, epoch, logger)
+        end = time()
+        print('\nTraning process takes {} seconds'.format(end - start))
+        total_training_time += end - start
+        # test(test_loader, model)
+    # print('Total traning process takes {} seconds'.format(total_training_time))
+
+# if __name__ == '__main__':
+#     model = Model()
+#     summary(model, (3, 320, 320), depth=4)

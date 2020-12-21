@@ -23,7 +23,7 @@ class Model(nn.Module):
         x = self.aspp(high_level_feature)
         x = self.pyramidal_features_distillation(x)
         visualize = self.visualization(x)
-        x = self.apperance_cues_filtration(x)
+        x = self.apperance_cues_filtration(x, low_level_feature)
         return x
 
 
