@@ -18,6 +18,7 @@ from data import HADataset
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Using device {}'.format(device))
 
+
 def train(train_loader, model, optimizer, epoch, logger):
     model.train()  # train mode (dropout and batchnorm is used)
 
@@ -27,7 +28,8 @@ def train(train_loader, model, optimizer, epoch, logger):
     for i, (img, alpha_label) in enumerate(train_loader):
         # Move to GPU, if available
         img = img.type(torch.FloatTensor).to(device)  # [N, 4, 320, 320]
-        alpha_label = alpha_label.type(torch.FloatTensor).to(device)  # [N, 320, 320]
+        alpha_label = alpha_label.type(
+            torch.FloatTensor).to(device)  # [N, 320, 320]
         alpha_label = alpha_label.unsqueeze(1)
         # alpha_label = alpha_label.reshape((-1, 2, im_size * im_size))  # [N, 320*320]
 
@@ -56,7 +58,8 @@ def train(train_loader, model, optimizer, epoch, logger):
 
         if i % print_freq == 0:
             status = 'Epoch: [{0}][{1}/{2}]\t' \
-                     'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(epoch, i, len(train_loader), loss=losses)
+                     'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(
+                         epoch, i, len(train_loader), loss=losses)
             logger.info(status)
 
     return losses.avg
@@ -103,10 +106,11 @@ def train(train_loader, model, optimizer, epoch, logger):
 #             test_loss, correct, len(test_loader.dataset),
 #             100. * correct / len(test_loader.dataset)))
 
+
 if __name__ == '__main__':
     model = Model()
     # summary(model, (3, 320, 320), depth=6)
-    train_loader = DataLoader(HADataset('train'), batch_size=8, shuffle=True)
+    train_loader = DataLoader(HADataset('train'), batch_size=4, shuffle=True)
     # test_loader = DataLoader(HADataset('test'), batch_size=4, shuffle=False)
     # test(test_loader, model)
     optimizer = optim.Adam(model.parameters())
