@@ -24,8 +24,8 @@ class SpatialAttention(nn.Module):
             nn.init.zeros_(torch.empty(K))))
         self.register_parameter('bi', nn.Parameter(
             nn.init.zeros_(torch.empty(1))))
-        self.tanh = nn.Tanh()
-        self.softmax = nn.Softmax(dim=0)  # softmax layer to calculate weights
+        # self.tanh = nn.Tanh()
+        # self.softmax = nn.Softmax(dim=0)  # softmax layer to calculate weights
 
     def forward(self, feature_map):
         """
@@ -37,8 +37,8 @@ class SpatialAttention(nn.Module):
         V_map = feature_map.view(
             feature_map.shape[0], feature_map.shape[1], -1)
         V_map = V_map.permute(0, 2, 1)  # (batch_size,W*H,C)
-        att = self.tanh((torch.matmul(V_map, self.Ws) + self.bs))
-        alpha = self.softmax(torch.matmul(att, self.Wi) + self.bi)
+        att = nn.Tanh()((torch.matmul(V_map, self.Ws) + self.bs))
+        alpha = nn.Softmax(dim=0)(torch.matmul(att, self.Wi) + self.bi)
         alpha = alpha.squeeze(2)
         print('alpha: ', alpha.shape)
         temp_feature_map = feature_map.view(
@@ -75,8 +75,8 @@ class ChannelWiseAttention(nn.Module):
         self.Wi_hat = nn.Parameter(torch.randn(K, 1))
         self.bc = nn.Parameter(torch.randn(K))
         self.bi_hat = nn.Parameter(torch.randn(1))
-        self.tanh = nn.Tanh()
-        self.softmax = nn.Softmax(dim=0)  # softmax layer to calculate weights
+        # self.tanh = nn.Tanh()
+        # self.softmax = nn.Softmax(dim=0)  # softmax layer to calculate weights
 
     def forward(self, feature_map):
         """
@@ -95,9 +95,11 @@ class ChannelWiseAttention(nn.Module):
         # print("m1",torch.matmul(V_map,self.W_c).shape)
         # print("bc",self.bc.shape)
         # (batch_size,C,K)
-        att = self.tanh((torch.matmul(V_map, self.Wc) + self.bc))
+        for name, param in self.named_parameters():
+            print(name, param.nelement())
+        att = nn.Tanh()((torch.matmul(V_map, self.Wc) + self.bc))
 #         print("att",att.shape)
-        beta = self.softmax(torch.matmul(att, self.Wi_hat) + self.bi_hat)
+        beta = nn.Softmax(dim=0)(torch.matmul(att, self.Wi_hat) + self.bi_hat)
         beta = beta.unsqueeze(2)
         # print("beta",beta.shape)
         attention_weighted_encoding = torch.mul(feature_map, beta)
