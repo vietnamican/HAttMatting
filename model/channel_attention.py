@@ -40,14 +40,10 @@ class SpatialAttention(nn.Module):
         att = nn.Tanh()((torch.matmul(V_map, self.Ws) + self.bs))
         alpha = nn.Softmax(dim=0)(torch.matmul(att, self.Wi) + self.bi)
         alpha = alpha.squeeze(2)
-        print('alpha: ', alpha.shape)
         temp_feature_map = feature_map.view(
             feature_map.shape[0], feature_map.shape[1], -1)
-        print('feature_map: ', temp_feature_map.shape)
         temp_alpha = alpha.unsqueeze(1)
-        print('temp_alpha: ', temp_alpha.shape)
         attention_weighted_encoding = torch.mul(temp_feature_map, temp_alpha)
-        print('attention_weighted_encoding: ', attention_weighted_encoding.shape)
         attention_weighted_encoding = attention_weighted_encoding.view(feature_map.shape)
         return attention_weighted_encoding, alpha
 
@@ -88,20 +84,10 @@ class ChannelWiseAttention(nn.Module):
         V_map = feature_map.view(
             feature_map.shape[0], feature_map.shape[1], -1) .mean(dim=2)
         V_map = V_map.unsqueeze(2)  # (batch_size,C,1)
-        # print(feature_map.shape)
-        # print(V_map.shape)
-        # print("wc",self.W_c.shape)
-        # print("whc",self.W_hc.shape)
-        # print("m1",torch.matmul(V_map,self.W_c).shape)
-        # print("bc",self.bc.shape)
         # (batch_size,C,K)
-        for name, param in self.named_parameters():
-            print(name, param.nelement())
         att = nn.Tanh()((torch.matmul(V_map, self.Wc) + self.bc))
-#         print("att",att.shape)
         beta = nn.Softmax(dim=0)(torch.matmul(att, self.Wi_hat) + self.bi_hat)
         beta = beta.unsqueeze(2)
-        # print("beta",beta.shape)
         attention_weighted_encoding = torch.mul(feature_map, beta)
 
         return attention_weighted_encoding, beta

@@ -64,15 +64,16 @@ def composite4(fg, bg, a, w, h):
     if bg_h > h:
         y = np.random.randint(0, bg_h - h)
     bg = np.array(bg[y:y + h, x:x + w], np.float32)
-    cv.imshow("bg", bg.astype(np.uint8))
-    cv.imshow("alpha", a)
-    cv.imshow("fg", fg.astype(np.uint8))
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # cv.imshow("bg", bg.astype(np.uint8))
+    # cv.imshow("alpha", a)
+    # cv.imshow("fg", fg.astype(np.uint8))
     alpha = np.zeros((h, w, 1), np.float32)
     alpha[:, :, 0] = a / 255.
     im = alpha * fg + (1 - alpha) * bg
     im = im.astype(np.uint8)
+    # cv.imshow('im', im)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
     return im, a, fg, bg
 
 
@@ -111,7 +112,6 @@ def random_choice(img, different_sizes=[(320, 320), (480, 480), (640, 640)]):
         crop_size = random.choice(different_sizes)
         if h > crop_size[0] and w > crop_size[1]:
             break
-    print(h, w)
     crop_height, crop_width = crop_size
     # y_indices, x_indices = np.where(trimap == unknown_code)
     # num_unknowns = len(y_indices)
@@ -150,7 +150,6 @@ class HADataset(Dataset):
 
         # trimap = gen_trimap(alpha)
         x, y, crop_size = random_choice(img, different_sizes)
-        print(x)
         img = safe_crop(img, x, y, crop_size)
         alpha = safe_crop(alpha, x, y, crop_size)
 

@@ -35,8 +35,6 @@ class ApperanceCuesFiltration(nn.Module):
         x = self.conv1x1(x)
         x = torch.sigmoid(x)
         x, _ = self.spatial_attention(x)
-        print(low_level_feature.shape)
-        print(x.shape)
         x = x * low_level_feature
         x = self.conv3x3_1(x)
         x = torch.cat([x, low_level_concat], dim=1)
