@@ -107,15 +107,35 @@ def gen_trimap(alpha):
 
 # Randomly crop (image, trimap) pairs centered on pixels in the unknown regions.
 def random_choice(img, different_sizes=[(320, 320), (480, 480), (640, 640)]):
-    h, w = img.shape[:2]
+    h, w, c = img.shape
+    # print(h, w, c)
+    if h < 320 or w < 320:
+        h_ = h
+        w_ = w
+        if w < 320:
+            w_ = 320
+        if h < 320:
+            h_ = 320
+        padded_img = np.zeros((h_, w_, c))
+        padded_img[:h, :w] = img
+        img = padded_img
+    h, w, c = img.shape
     while(True):
         crop_size = random.choice(different_sizes)
-        if h > crop_size[0] and w > crop_size[1]:
+        if h >= crop_size[0] and w >= crop_size[1]:
             break
     crop_height, crop_width = crop_size
     # y_indices, x_indices = np.where(trimap == unknown_code)
     # num_unknowns = len(y_indices)
-    x, y = np.random.randint(0, high = h-crop_height), np.random.randint(0, high = w-crop_width)
+    if h == crop_height:
+        x = 0
+    else:
+        x = np.random.randint(0, high = h-crop_height)
+    if w == crop_width:
+        y = 0
+    else:
+        y = np.random.randint(0, high = w-crop_width)
+    # x, y = np.random.randint(0, high = h-crop_height), np.random.randint(0, high = w-crop_width)
     # if num_unknowns > 0:
     #     ix = np.random.choice(range(num_unknowns))
     #     center_x = x_indices[ix]
@@ -143,15 +163,18 @@ class HADataset(Dataset):
         im_name = fg_files[fcount]
         bg_name = bg_files[bcount]
         img, alpha, fg, bg = process(im_name, bg_name)
-
+        # print('pass process {}th'.format(i))
         # crop size 320:640:480 = 1:1:1
         different_sizes = [(320, 320), (480, 480), (640, 640)]
         # crop_size = random.choice(different_sizes)
 
         # trimap = gen_trimap(alpha)
         x, y, crop_size = random_choice(img, different_sizes)
+        # print('pass random_choice {}th'.format(i))
         img = safe_crop(img, x, y, crop_size)
+        # print('pass crop {}th'.format(i))
         alpha = safe_crop(alpha, x, y, crop_size)
+        # print('pass extract alpha {}th'.format(i))
 
         # trimap = gen_trimap(alpha)
 
@@ -199,11 +222,13 @@ def gen_names():
     with open('train_names.txt', 'w') as file:
         file.write('\n'.join(train_names))
 
+from torch.utils.data import DataLoader
 
 if __name__ == "__main__":
 
-    dataset = HADataset('valid')
-    for image, alpha in tqdm(dataset):
+    dataset = DataLoader(HADataset('valid'), batch_size=1,shuffle=False)
+    for i, (image, alpha) in enumerate(tqdm(dataset)):
+        # print(image.shape, alpha.shape)
         pass
 
     # img1, alpha1, fg1, bg1 = process(fg_files[92], bg_files[411 ])
@@ -232,3 +257,4 @@ if __name__ == "__main__":
     # cv.destroyAllWindows()
     # cv.imwrite("alpha.png", alpha.astype(np.uint8))
     # cv.imwrite("compose.png", img.astype(np.uint8))
+

@@ -76,21 +76,21 @@ def do_composite():
     print('num_samples: ' + str(num_samples))
 
     start = time.time()
-    # bcount = 0
-    # for fcount in tqdm(range(len(fg_files))):
-    #     im_name = fg_files[fcount]
-    #
-    #     for i in range(num_bgs):
-    #         bg_name = bg_files[bcount]
-    #         process(im_name, bg_name, fcount, bcount)
-    #         bcount += 1
+    bcount = 0
+    for fcount in tqdm(range(len(fg_files))):
+         im_name = fg_files[fcount]
+         for i in range(num_bgs):
+            bg_name = bg_files[bcount]
+            process(im_name, bg_name, fcount, bcount)
+            bcount += 1
+            print(bcount)
 
-    with Pool(processes=16) as p:
+    '''with Pool(processes=36) as p:
         max_ = len(fg_files)
         print('num_fg_files: ' + str(max_))
         with tqdm(total=max_) as pbar:
             for i, _ in tqdm(enumerate(p.imap_unordered(process_one_fg, range(0, max_)))):
-                pbar.update()
+                pbar.update()'''
 
     end = time.time()
     elapsed = end - start
