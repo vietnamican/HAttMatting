@@ -1,17 +1,20 @@
 import math
 import os
 import random
-from time import time
-from tqdm import tqdm
 
 import cv2 as cv
 import numpy as np
 import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
+import tensorflow as tf
 
-from config import im_size, unknown_code, fg_path, bg_path, a_path, num_valid
-from utils import safe_crop
+import tfrecord_creator	
+from config import im_size, unknown_code, fg_path, bg_path, a_path, num_valid, valid_ratio, num_fgs, num_bgs
+from utils import safe_crop, parse_args, maybe_random_interp
+
+global args
+args = parse_args()
 
 # Data augmentation and normalization for training
 # Just normalization for validation
@@ -26,6 +29,44 @@ data_transforms = {
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
 }
+
+def return_raw_image(dataset):
+    dataset_raw = []
+    for image_features in dataset:
+        image_raw = image_features['image'].numpy()
+        image = tf.image.decode_jpeg(image_raw)
+        dataset_raw.append(image)
+        
+    return dataset_raw
+
+fg_dataset = tfrecord_creator.read("fg", "./data/tfrecord/")
+bg_dataset = tfrecord_creator.read("bg", "./data/tfrecord/")
+a_dataset  = tfrecord_creator.read("a",  "./data/tfrecord/")
+fg_dataset = list(fg_dataset)
+bg_dataset = list(bg_dataset)
+a_dataset  = list(a_dataset)
+print("___________________")
+print(len(fg_dataset))
+print(len(bg_dataset))
+print(len(a_dataset))
+print("___________________")
+# fg_raw = return_raw_image(fg_dataset)
+# bg_raw = return_raw_image(bg_dataset)
+# a_raw  = return_raw_image(a_dataset)
+
+def get_raw(type_of_dataset, count):
+    if type_of_dataset == 'fg':
+        temp = fg_dataset[count]['image']
+        channels=3
+    elif type_of_dataset == 'bg':
+        temp = bg_dataset[count]['image']
+        channels=3
+    else :
+        temp = a_dataset[count]['image']
+        channels=1
+    temp = tf.image.decode_jpeg(temp, channels=channels)
+    temp = np.asarray(temp)
+    return temp
 
 kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3, 3))
 with open('Combined_Dataset/Training_set/training_fg_names.txt') as f:
@@ -63,7 +104,11 @@ def composite4(fg, bg, a, w, h):
     y = 0
     if bg_h > h:
         y = np.random.randint(0, bg_h - h)
+    if bg.ndim == 2:
+        bg = np.reshape(bg, (h,w,1))
     bg = np.array(bg[y:y + h, x:x + w], np.float32)
+    bg = np.reshape(bg, (h,w,-1))
+    fg = np.reshape(fg, (h,w,-1))
     alpha = np.zeros((h, w, 1), np.float32)
     alpha[:, :, 0] = a / 255.
     im = alpha * fg + (1 - alpha) * bg
@@ -71,11 +116,12 @@ def composite4(fg, bg, a, w, h):
     return im, a, fg, bg
 
 
-def process(im_name, bg_name):
-    im = cv.imread(fg_path + im_name)
-    a = cv.imread(a_path + im_name, 0)
+def process(fcount, bcount):
+    im = get_raw("fg", fcount)
+    a = get_raw("a", fcount)
+    a = np.reshape(a, (a.shape[0], a.shape[1]))
     h, w = im.shape[:2]
-    bg = cv.imread(bg_path + bg_name)
+    bg = get_raw("bg", bcount)
     bh, bw = bg.shape[:2]
     wratio = w / bw
     hratio = h / bh
@@ -139,20 +185,33 @@ class HADataset(Dataset):
         with open(filename, 'r') as file:
             self.names = file.read().splitlines()
 
+        # fgs = np.repeat(np.arange(num_fgs), args.batch_size * 8)
+        # np.random.shuffle(fgs)
+        # split_index = int(fgs.shape[0] * (1 - valid_ratio))
+        # self.fgs = fgs
+        # if split == 'train':
+        #     self.fgs = fgs[:split_index]
+        # else:
+        #     self.fgs = fgs[split_index:]
+        # self.fg_num = np.unique(self.fgs).shape[0]
+
+        # print(self.fg_num)
+
         self.transformer = data_transforms[split]
 
     def __getitem__(self, i):
         name = self.names[i]
         fcount = int(name.split('.')[0].split('_')[0])
         bcount = int(name.split('.')[0].split('_')[1])
-        im_name = fg_files[fcount]
-        bg_name = bg_files[bcount]
-        img, alpha, _, _ = process(im_name, bg_name)
+        # fcount = self.fgs[i]
+        # bcount = np.random.randint(num_bgs)
+        img, alpha, _, _ = process(fcount, bcount)
+
         # crop size 320:640:480 = 1:1:1
         different_sizes = [(320, 320), (480, 480), (640, 640)]
+        crop_size = random.choice(different_sizes)
 
-        # trimap = gen_trimap(alpha)
-        x, y, crop_size = random_choice(img, different_sizes)
+        x, y = random_choice(img, different_sizes)
         img = safe_crop(img, x, y, crop_size)
         alpha = safe_crop(alpha, x, y, crop_size)
 
@@ -164,8 +223,6 @@ class HADataset(Dataset):
             # trimap = np.fliplr(trimap)
             alpha = np.fliplr(alpha)
 
-        # x = torch.zeros((4, im_size, im_size), dtype=torch.float)
-        img = img[..., ::-1]  # RGB
         img = transforms.ToPILImage()(img)
         img = self.transformer(img)
         x = img
@@ -174,12 +231,11 @@ class HADataset(Dataset):
         y = alpha / 255.
         # mask = np.equal(trimap, 128).astype(np.float32)
         # y[1, :, :] = mask
-
+        
         return x, y
 
     def __len__(self):
-        return len(self.names)
-
+        return len(self.fgs)
 
 def gen_names():
     num_fgs = 431
@@ -202,39 +258,6 @@ def gen_names():
     with open('train_names.txt', 'w') as file:
         file.write('\n'.join(train_names))
 
-from torch.utils.data import DataLoader
 
 if __name__ == "__main__":
-
-    dataset = DataLoader(HADataset('valid'), batch_size=1,shuffle=False)
-    for i, (image, alpha) in enumerate(tqdm(dataset)):
-        # print(image.shape, alpha.shape)
-        pass
-
-    # img1, alpha1, fg1, bg1 = process(fg_files[92], bg_files[411 ])
-    # h, w = alpha1.shape
-    # img2, alpha2, fg2, bg2 = process(fg_files[411], bg_files[2])
-    # cv.imshow("fg2-raw", fg2.astype(np.uint8))
-    # fg2 = cv.resize(fg2, (w, h), interpolation=cv.INTER_NEAREST)
-    # alpha2 = cv.resize(alpha2, (w, h), interpolation=cv.INTER_NEAREST)
-    # alpha_tmp = (1 - (1 - alpha1 / 255.0) * (alpha2 / 255.0)) * 255
-    # cv.imshow("fg1", fg1.astype(np.uint8))
-    # cv.imshow("fg2", fg2.astype(np.uint8))
-    # cv.imshow("alpha1", alpha1)
-    # # cv.imshow("bg1", bg1.astype(np.uint8))
-    # # cv.imshow("bg2", bg2.astype(np.uint8))
-    # # cv.imshow("1", img1)
-    # # cv.imshow("2", img2)
-    # img, alpha, _, _ = composite4(fg1, fg2, alpha_tmp, w, h)
-    # alpha = (1 - (1 - alpha1 / 255.0) * (1 - alpha2 / 255.0)) * 255
-    # # fg = fg1.astype(np.float32) * alpha_tmp[:,:,None] + fg2.astype(np.float32) * (1 - alpha_tmp[:,:,None])
-    # img, alpha, fg, bg = composite4(img, bg1, alpha, w, h)
-    # # alpha = alpha_tmp * 255.0
-    # fg = fg.astype(np.uint8)
-    # cv.imshow("compose", img.astype(np.uint8))
-    # cv.imshow("alpha", alpha.astype(np.uint8))
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()
-    # cv.imwrite("alpha.png", alpha.astype(np.uint8))
-    # cv.imwrite("compose.png", img.astype(np.uint8))
-
+    gen_names()
