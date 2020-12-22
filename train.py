@@ -62,6 +62,7 @@ def train(train_loader, model, optimizer, epoch, logger):
                          epoch, i, len(train_loader), loss=losses)
             logger.info(status)
 
+    save_checkpoint(epoch, 0, model, optimizer, losses.avg, False)
     return losses.avg
 
 # def train(epoch, total_epoch, loader, model, optimizer, log_interval=1):

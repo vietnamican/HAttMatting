@@ -23,12 +23,12 @@ def clip_gradient(optimizer, grad_clip):
 
 def save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss, is_best):
     state = {'epoch': epoch,
-             'epochs_since_improvement': epochs_since_improvement,
+            #  'epochs_since_improvement': epochs_since_improvement,
              'loss': loss,
-             'model': model,
-             'optimizer': optimizer}
+             'model_state_dict': model.state_dict(),
+             'optimizer_state_dict': optimizer.state_dict()}
     # filename = 'checkpoint_' + str(epoch) + '_' + str(loss) + '.tar'
-    filename = 'checkpoint.tar'
+    filename = 'checkpoint_{}_{}.tar'.format(epoch, loss)
     torch.save(state, filename)
     # If this checkpoint is the best so far, store a copy so it doesn't get overwritten by a worse checkpoint
     if is_best:
