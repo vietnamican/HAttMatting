@@ -118,7 +118,7 @@ if __name__ == '__main__':
     global writer
     writer = SummaryWriter(logdir=args.logdir)
     global start_epoch
-    start_epoch = 0
+    start_epoch = args.start_epoch
     if checkpoint is None:
         torch.random.manual_seed(7)
         torch.cuda.manual_seed(7)
