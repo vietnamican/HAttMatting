@@ -34,10 +34,10 @@ bg_path = 'data/bg/'
 out_path = 'data/merged/'
 
 max_size = 1600
-fg_path_test = 'data/fg_test/'
-a_path_test = 'data/mask_test/'
-bg_path_test = 'data/bg_test/'
-out_path_test = 'data/merged_test/'
+fg_path_test = 'data/fg/'
+a_path_test = 'data/mask/'
+bg_path_test = 'data/bg/'
+out_path_test = 'data/merged/'
 
 fg_path_test_composition = 'data/fg_test/'
 a_path_test_composition = 'data/mask_test/'
