@@ -8,6 +8,7 @@ import torch
 from skimage.measure import label
 import scipy.ndimage
 import scipy.ndimage.morphology
+from pytorch_msssim import ssim, ms_ssim, SSIM, MS_SSIM
 
 from config import im_size, epsilon, epsilon_sqr
 
@@ -135,10 +136,11 @@ def safe_crop(mat, x, y, crop_size=(im_size, im_size)):
 # absolute values, we use the following loss function to approximate it.
 def alpha_prediction_loss(y_pred, y_true):
     # mask = y_true
-    diff = y_pred - y_true
-    diff = diff
+    # diff = y_pred - y_true
+    # diff = diff
+    return ms_ssim(y_pred - y_true, data_range=1, size_average=True)
     # num_pixels = torch.sum(mask)
-    return torch.sum(torch.sqrt(torch.pow(diff, 2) + epsilon_sqr)) / (y_true.numel() + epsilon)
+    # return torch.sum(torch.sqrt(torch.pow(diff, 2) + epsilon_sqr)) / (y_true.numel() + epsilon)
 
 
 # compute the MSE error given a prediction, a ground truth and a trimap.
