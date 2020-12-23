@@ -30,6 +30,7 @@ def gen_test_names():
 
 def process_test(im_name, bg_name, trimap):
     # print(bg_path_test + bg_name)
+    print(fg_path_test + im_name)
     im = cv.imread(fg_path_test + im_name)
     a = cv.imread(a_path_test + im_name, 0)
     h, w = im.shape[:2]
@@ -105,7 +106,7 @@ if __name__ == '__main__':
     else:
         checkpoint = torch.load(checkpoint)
     model_state_dict = checkpoint['model_state_dict']
-    model = Model()
+    model = Model().to(args.device)
     model.load_state_dict(model_state_dict)
     model.eval()
 
@@ -146,41 +147,43 @@ if __name__ == '__main__':
         img = img[..., ::-1]  # RGB
         img = transforms.ToPILImage()(img)  # [3, 320, 320]
         img = transformer(img)  # [3, 320, 320]
-        x = img
+        x = img.unsqueeze(0)
         # x[0:, 3, :, :] = torch.from_numpy(new_trimap.copy() / 255.)
 
         # Move to GPU, if available
         x = x.type(torch.FloatTensor).to(device)  # [1, 4, 320, 320]
         alpha = alpha / 255.
+        try:
+            with torch.no_grad():
+                pred = model(x)  # [1, 4, 320, 320]
 
-        with torch.no_grad():
-            pred = model(x)  # [1, 4, 320, 320]
+            pred = pred.cpu().numpy()
+            pred = pred.reshape((h, w))  # [320, 320]
 
-        pred = pred.cpu().numpy()
-        pred = pred.reshape((h, w))  # [320, 320]
+            pred[new_trimap == 0] = 0.0
+            pred[new_trimap == 255] = 1.0
+            cv.imwrite('images/test/out/' + trimap_name, pred * 255)
 
-        pred[new_trimap == 0] = 0.0
-        pred[new_trimap == 255] = 1.0
-        cv.imwrite('images/test/out/' + trimap_name, pred * 255)
+            # Calculate loss
+            # loss = criterion(alpha_out, alpha_label)
+            mse_loss = compute_mse(pred, alpha, trimap)
+            sad_loss = compute_sad(pred, alpha)
+            gradient_loss = compute_gradient_loss(pred, alpha, trimap)
+            connectivity_loss = compute_connectivity_error(pred, alpha, trimap)
 
-        # Calculate loss
-        # loss = criterion(alpha_out, alpha_label)
-        mse_loss = compute_mse(pred, alpha, trimap)
-        sad_loss = compute_sad(pred, alpha)
-        gradient_loss = compute_gradient_loss(pred, alpha, trimap)
-        connectivity_loss = compute_connectivity_error(pred, alpha, trimap)
+            # Keep track of metrics
+            mse_losses.update(mse_loss.item())
+            sad_losses.update(sad_loss.item())
+            gradient_losses.update(gradient_loss)
+            connectivity_losses.update(connectivity_loss)
+            print("sad:{} mse:{} gradient: {} connectivity: {}".format(sad_loss.item(), mse_loss.item(), gradient_loss, connectivity_loss))
+            f.write("sad:{} mse:{} gradient: {} connectivity: {}".format(sad_loss.item(), mse_loss.item(), gradient_loss, connectivity_loss) + "\n")
 
-        # Keep track of metrics
-        mse_losses.update(mse_loss.item())
-        sad_losses.update(sad_loss.item())
-        gradient_losses.update(gradient_loss)
-        connectivity_losses.update(connectivity_loss)
-        print("sad:{} mse:{} gradient: {} connectivity: {}".format(sad_loss.item(), mse_loss.item(), gradient_loss, connectivity_loss))
-        f.write("sad:{} mse:{} gradient: {} connectivity: {}".format(sad_loss.item(), mse_loss.item(), gradient_loss, connectivity_loss) + "\n")
-
-        pred = (pred.copy() * 255).astype(np.uint8)
-        draw_str(pred, (10, 20), "sad:{} mse:{} gradient: {} connectivity: {}".format(sad_loss.item(), mse_loss.item(), gradient_loss, connectivity_loss))
-        cv.imwrite('images/test/out/' + args.output_folder + '/' + name, pred )
+            pred = (pred.copy() * 255).astype(np.uint8)
+            draw_str(pred, (10, 20), "sad:{} mse:{} gradient: {} connectivity: {}".format(sad_loss.item(), mse_loss.item(), gradient_loss, connectivity_loss))
+            cv.imwrite('images/test/out/' + args.output_folder + '/' + name, pred )
+        except:
+            pass
         
     print("sad_avg:{} mse_avg:{} gradient_avg: {} connectivity_avg: {}".format(sad_losses.avg, mse_losses.avg, gradient_losses.avg, connectivity_losses.avg))
     f.write("sad:{} mse:{} gradient_avg: {} connectivity_avg: {}".format(sad_losses.avg, mse_losses.avg, gradient_losses.avg, connectivity_losses.avg) + "\n")
