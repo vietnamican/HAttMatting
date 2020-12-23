@@ -128,7 +128,6 @@ if __name__ == '__main__':
     else:
         checkpoint = torch.load(checkpoint)
         
-        epochs_since_improvement = checkpoint['epochs_since_improvement']
         optimizer = checkpoint['optimizer_state_dict']
         model_state_dict = checkpoint['model_state_dict']
         model = Model()
