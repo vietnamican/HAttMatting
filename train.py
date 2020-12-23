@@ -127,11 +127,12 @@ if __name__ == '__main__':
         optimizer = torch.optim.Adam(model.parameters())
     else:
         checkpoint = torch.load(checkpoint)
-        
-        optimizer = checkpoint['optimizer_state_dict']
         model_state_dict = checkpoint['model_state_dict']
         model = Model()
         model.load_state_dict(model_state_dict)
+        optimizer = torch.optim.Adam(model.parameters())
+        optimizer_state_dict = checkpoint['optimizer_state_dict']
+        optimizer.load_state_dict(optimizer_state_dict)
         if 'epoch' in checkpoint:
             start_epoch = checkpoint['epoch'] + 1
         else:
