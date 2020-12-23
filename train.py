@@ -130,7 +130,9 @@ if __name__ == '__main__':
         model_state_dict = checkpoint['model_state_dict']
         model = Model()
         model.load_state_dict(model_state_dict)
+        model = model.to(device)
         optimizer = torch.optim.Adam(model.parameters())
+        optimizer.to(device)
         optimizer_state_dict = checkpoint['optimizer_state_dict']
         optimizer.load_state_dict(optimizer_state_dict)
         if 'epoch' in checkpoint:
@@ -149,7 +151,6 @@ if __name__ == '__main__':
             np.random.set_state(checkpoint['np_seed'])
         else:
             np.random.seed(7)
-    model = model.to(device)
     summary(model, (3, 320, 320), depth=6)
     train_loader = DataLoader(HADataset('train'), batch_size=8, shuffle=True)
     # optimizer = optim.Adam(model.parameters())
