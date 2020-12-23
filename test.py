@@ -106,7 +106,7 @@ if __name__ == '__main__':
         checkpoint = torch.load(checkpoint)
     model_state_dict = checkpoint['model_state_dict']
     model = Model()
-    model = model.load_state_dict(model_state_dict)
+    model.load_state_dict(model_state_dict)
     model.eval()
 
     transformer = data_transforms['valid']
