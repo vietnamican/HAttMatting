@@ -135,6 +135,10 @@ def safe_crop(mat, x, y, crop_size=(im_size, im_size)):
 # predicted alpha values at each pixel. However, due to the non-differentiable property of
 # absolute values, we use the following loss function to approximate it.
 def alpha_prediction_loss(y_pred, y_true):
+    if len(y_pred.shape) == 3:
+        y_pred = y_pred.unsqueeze(0)
+    if len(y_true.shape) == 3:
+        y_true = y_true.unsqueeze(0)
     # mask = y_true
     # diff = y_pred - y_true
     # diff = diff
