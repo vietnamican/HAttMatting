@@ -10,8 +10,8 @@ from torchvision import transforms
 import tensorflow as tf
 
 import tfrecord_creator	
-from config import im_size, unknown_code, fg_path, bg_path, a_path, num_valid, valid_ratio, num_fgs, num_bgs
-from utils import safe_crop, parse_args, maybe_random_interp
+from config import im_size, unknown_code, fg_path, bg_path, a_path, num_valid
+from utils import safe_crop, parse_args
 
 global args
 args = parse_args()
@@ -209,9 +209,9 @@ class HADataset(Dataset):
 
         # crop size 320:640:480 = 1:1:1
         different_sizes = [(320, 320), (480, 480), (640, 640)]
-        crop_size = random.choice(different_sizes)
+        # crop_size = random.choice(different_sizes)
 
-        x, y = random_choice(img, different_sizes)
+        x, y, crop_size = random_choice(img, different_sizes)
         img = safe_crop(img, x, y, crop_size)
         alpha = safe_crop(alpha, x, y, crop_size)
 
@@ -235,7 +235,7 @@ class HADataset(Dataset):
         return x, y
 
     def __len__(self):
-        return len(self.fgs)
+        return len(self.names)
 
 def gen_names():
     num_fgs = 431

@@ -130,6 +130,7 @@ dmypy.json
 
 
 #
+checkpoint*
 dogs-vs-cats.zip
 dogs-vs-cats/
 result/

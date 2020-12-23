@@ -13,7 +13,7 @@ from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_
 from config import device, im_size, grad_clip, print_freq
 
 from model import Model
-from data import HADataset
+from data_tfrecord import HADataset
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Using device {}'.format(device))
@@ -110,8 +110,8 @@ def train(train_loader, model, optimizer, epoch, logger):
 
 if __name__ == '__main__':
     model = Model()
-    # summary(model, (3, 320, 320), depth=6)
-    train_loader = DataLoader(HADataset('train'), batch_size=64, shuffle=True)
+    summary(model, (3, 320, 320), depth=6)
+    train_loader = DataLoader(HADataset('train'), batch_size=8, shuffle=True)
     # test_loader = DataLoader(HADataset('test'), batch_size=4, shuffle=False)
     # test(test_loader, model)
     optimizer = optim.Adam(model.parameters())
