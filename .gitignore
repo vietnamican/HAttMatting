@@ -136,3 +136,5 @@ dogs-vs-cats/
 result/
 data/
 zip_data/
+tfrecord.zip
+checkpoint*
