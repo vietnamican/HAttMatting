@@ -161,7 +161,7 @@ if __name__ == '__main__':
 
         pred[new_trimap == 0] = 0.0
         pred[new_trimap == 255] = 1.0
-        cv.imwrite('images/test/out/' + trimap_name, pred * 255)
+        # cv.imwrite('images/test/out/' + args.output_folder + "/" + trimap_name, pred * 255)
 
         # Calculate loss
         # loss = criterion(alpha_out, alpha_label)
@@ -180,7 +180,8 @@ if __name__ == '__main__':
 
         pred = (pred.copy() * 255).astype(np.uint8)
         draw_str(pred, (10, 20), "sad:{} mse:{} gradient: {} connectivity: {}".format(sad_loss.item(), mse_loss.item(), gradient_loss, connectivity_loss))
-        cv.imwrite('images/test/out/' + args.output_folder + '/' + name, pred )
+        print('Writing output for {}'.format(trimap_name))
+        cv.imwrite('images/test/out/' + args.output_folder + '/' + trimap_name, pred)
         
     print("sad_avg:{} mse_avg:{} gradient_avg: {} connectivity_avg: {}".format(sad_losses.avg, mse_losses.avg, gradient_losses.avg, connectivity_losses.avg))
     f.write("sad:{} mse:{} gradient_avg: {} connectivity_avg: {}".format(sad_losses.avg, mse_losses.avg, gradient_losses.avg, connectivity_losses.avg) + "\n")
