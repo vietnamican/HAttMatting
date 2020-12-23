@@ -29,7 +29,11 @@ def save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss, is_
             #  'epochs_since_improvement': epochs_since_improvement,
              'loss': loss,
              'model_state_dict': model.state_dict(),
-             'optimizer_state_dict': optimizer.state_dict()}
+             'optimizer_state_dict': optimizer.state_dict(),
+             'torch_seed': torch.get_rng_state(),
+             'torch_cuda_seed': torch.cuda.get_rng_state(),
+             'np_seed': np.random.get_state()
+             }
     # filename = 'checkpoint_' + str(epoch) + '_' + str(loss) + '.tar'
     filename = 'checkpoint_{}_{}.tar'.format(epoch, loss)
     torch.save(state, filename)
@@ -96,6 +100,7 @@ def parse_args():
     parser.add_argument('--batch-size', type=int, default=32, help='batch size in each context')
     parser.add_argument('--checkpoint', type=str, default=None, help='checkpoint')
     parser.add_argument('--pretrained', type=bool, default=True, help='pretrained model')
+    parser.add_argument('--logdir', type=bool, default=True, help='logdir model')
     args = parser.parse_args()
     return args
 

@@ -7,6 +7,8 @@ from torchsummary import summary
 from torch.utils.data.dataloader import DataLoader
 import torch.nn.functional as F
 import torch.optim as optim
+import numpy as np
+from tensorboardX import SummaryWriter
 
 from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, get_learning_rate, \
     alpha_prediction_loss, adjust_learning_rate
@@ -61,7 +63,8 @@ def train(train_loader, model, optimizer, epoch, logger):
                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'.format(
                          epoch, i, len(train_loader), loss=losses)
             logger.info(status)
-
+    writer.add_scalar('Train_Loss', losses.avg, epoch)
+    writer.add_scalar('Learning_Rate', get_learning_rate(optimizer), epoch)
     save_checkpoint(epoch, 0, model, optimizer, losses.avg, False)
     return losses.avg
 
@@ -109,16 +112,51 @@ def train(train_loader, model, optimizer, epoch, logger):
 
 
 if __name__ == '__main__':
-    model = Model()
+    global args
+    args = parse_args()
+    checkpoint = args.checkpoint
+    global writer
+    writer = SummaryWriter(logdir=args.logdir)
+    global start_epoch
+    start_epoch = 0
+    if checkpoint is None:
+        torch.random.manual_seed(7)
+        torch.cuda.manual_seed(7)
+        np.random.seed(7)
+        model = Model()
+        optimizer = torch.optim.Adam(model.parameters())
+    else:
+        checkpoint = torch.load(checkpoint)
+        
+        epochs_since_improvement = checkpoint['epochs_since_improvement']
+        optimizer = checkpoint['optimizer_state_dict']
+        model_state_dict = checkpoint['model_state_dict']
+        model = Model()
+        model.load_state_dict(model_state_dict)
+        if 'epoch' in checkpoint:
+            start_epoch = checkpoint['epoch'] + 1
+        else:
+            start_epoch = 1
+        if 'torch_seed' in checkpoint:
+            torch.random.set_rng_state(checkpoint['torch_seed'])
+        else:
+            torch.random.manual_seed(7)
+        if 'torch_cuda_seed' in checkpoint:
+            torch.cuda.set_rng_state(checkpoint['torch_cuda_seed'])
+        else:
+            torch.cuda.manual_seed(7)
+        if 'np_seed' in checkpoint:
+            np.random.set_state(checkpoint['np_seed'])
+        else:
+            np.random.seed(7)
+    model = model.to(device)
     summary(model, (3, 320, 320), depth=6)
     train_loader = DataLoader(HADataset('train'), batch_size=8, shuffle=True)
-    # test_loader = DataLoader(HADataset('test'), batch_size=4, shuffle=False)
-    # test(test_loader, model)
-    optimizer = optim.Adam(model.parameters())
+    # optimizer = optim.Adam(model.parameters())
     total_training_time = 0
-    n_epochs = 2
+    n_epochs = args.end_epoch
     logger = get_logger()
-    for epoch in range(1, n_epochs + 1):
+    for epoch in range(start_epoch, n_epochs + 1):
         start = time()
         train(train_loader, model, optimizer, epoch, logger)
         end = time()
