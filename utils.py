@@ -87,7 +87,7 @@ def accuracy(scores, targets, k=1):
     _, ind = scores.topk(k, 1, True, True)
     correct = ind.eq(targets.view(-1, 1).expand_as(ind))
     correct_total = correct.view(-1).float().sum()  # 0D tensor
-    return correct_total.item() * (100.0 / batch_size)
+    return correct_total.item() * (100.0 / batch_size)  
 
 
 def parse_args():
@@ -103,7 +103,7 @@ def parse_args():
     parser.add_argument('--batch-size', type=int, default=32, help='batch size in each context')
     parser.add_argument('--checkpoint', type=str, default=None, help='checkpoint')
     parser.add_argument('--pretrained', type=bool, default=True, help='pretrained model')
-    parser.add_argument('--logdir', type=bool, default=True, help='logdir model')
+    parser.add_argument('--logdir', type=str, default=True, help='logdir model')
     args = parser.parse_args()
     return args
 
