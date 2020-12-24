@@ -138,3 +138,6 @@ data/
 zip_data/
 tfrecord.zip
 checkpoint*
+log*/
+True/
+images/
