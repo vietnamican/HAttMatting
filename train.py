@@ -131,9 +131,12 @@ if __name__ == '__main__':
         model = Model()
         model.load_state_dict(model_state_dict)
         model = model.to(device)
-        optimizer = torch.optim.Adam(model.parameters())
-        optimizer_state_dict = checkpoint['optimizer_state_dict']
-        optimizer.load_state_dict(optimizer_state_dict)
+        if args.reset_optimizer:
+            optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        else: 
+            optimizer = torch.optim.Adam(model.parameters())
+            optimizer_state_dict = checkpoint['optimizer_state_dict']
+            optimizer.load_state_dict(optimizer_state_dict)
         if 'epoch' in checkpoint:
             start_epoch = checkpoint['epoch'] + 1
         else:
