@@ -137,22 +137,22 @@ if __name__ == '__main__':
             optimizer = torch.optim.Adam(model.parameters())
             optimizer_state_dict = checkpoint['optimizer_state_dict']
             optimizer.load_state_dict(optimizer_state_dict)
-        if 'epoch' in checkpoint:
+        if 'epoch' in checkpoint and checkpoint['epoch'] is not None:
             start_epoch = checkpoint['epoch'] + 1
         else:
             start_epoch = 1
-        if 'torch_seed' in checkpoint:
+        if 'torch_seed' in checkpoint and checkpoint['torch_seed'] is not None:
             torch.random.set_rng_state(checkpoint['torch_seed'])
         else:
             torch.random.manual_seed(7)
-        if 'torch_cuda_seed' in checkpoint:
+        if 'torch_cuda_seed' in checkpoint and checkpoint['torch_cuda_seed'] is not None:
             torch.cuda.set_rng_state(checkpoint['torch_cuda_seed'])
         else:
             torch.cuda.manual_seed(7)
-        if 'np_seed' in checkpoint:
+        if 'np_seed' in checkpoint and checkpoint['np_seed'] is not None:
             np.random.set_state(checkpoint['np_seed'])
         else:
-            np.random.seed(7)
+            np.random.seed(7))
     summary(model, (3, 320, 320), depth=6)
     train_loader = DataLoader(HADataset('train'), batch_size=8, shuffle=True)
     # optimizer = optim.Adam(model.parameters())
