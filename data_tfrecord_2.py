@@ -200,8 +200,7 @@ class HADataset(Dataset):
         x, y, crop_size = random_choice(trimap, different_sizes)
         img = safe_crop(img, x, y, crop_size)
         alpha = safe_crop(alpha, x, y, crop_size)
-
-        trimap = gen_trimap(alpha)
+        trimap = safe_crop(trimap, x, y, crop_size)
 
         # Flip array left to right randomly (prob=1:1)
         if np.random.random_sample() > 0.5:
