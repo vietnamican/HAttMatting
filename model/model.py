@@ -28,7 +28,7 @@ class Model(nn.Module):
         visualize = self.visualization(x)
         x = self.apperance_cues_filtration(x, low_level_feature)
         x = torch.cat((original_feature, x), 1)
-        x = self.refinement_network(x)
+        _, x = self.refinement_network(x)
         return x
 
 
