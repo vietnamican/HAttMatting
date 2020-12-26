@@ -147,7 +147,7 @@ def gen_trimap(alpha):
 
 # Randomly crop (image, trimap) pairs centered on pixels in the unknown regions.
 def random_choice(trimap, different_sizes=[(320, 320), (480, 480), (640, 640)]):
-    h, w, c = trimap.shape
+    h, w = trimap.shape
     # print(h, w, c)
     if h < 320 or w < 320:
         h_ = h
@@ -156,10 +156,10 @@ def random_choice(trimap, different_sizes=[(320, 320), (480, 480), (640, 640)]):
             w_ = 320
         if h < 320:
             h_ = 320
-        padded_trimap = np.zeros((h_, w_, c))
+        padded_trimap = np.zeros((h_, w_))
         padded_trimap[:h, :w] = trimap
         trimap = padded_trimap
-    h, w, c = trimap.shape
+    h, w = trimap.shape
     while(True):
         crop_size = random.choice(different_sizes)
         if h >= crop_size[0] and w >= crop_size[1]:
