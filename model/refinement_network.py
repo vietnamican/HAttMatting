@@ -19,17 +19,17 @@ class RefinementNetwork(nn.Module):
         self.conv4_1 = nn.Conv2d(256, 512, kernel_size=3, padding=1,bias=True)
         self.conv4_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
         self.conv4_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
-        # self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
-        # self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
-        # self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
+        self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
+        self.conv5_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
+        self.conv5_3 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
 
         # model released before 2019.09.09 should use kernel_size=1 & padding=0
-        #self.conv6_1 = nn.Conv2d(512, 512, kernel_size=1, padding=0,bias=True)
-        # self.conv6_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
-        self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
-        self.deconv5_1 = nn.Conv2d(512, 512, kernel_size=1, padding=1,bias=True)
+        # self.conv6_1 = nn.Conv2d(512, 512, kernel_size=1, padding=0,bias=True)
+        self.conv6_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
+        # self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
+        # self.deconv5_1 = nn.Conv2d(512, 512, kernel_size=1, padding=1,bias=True)
         
-        # self.deconv6_1 = nn.Conv2d(512, 512, kernel_size=1,bias=True)
+        self.deconv6_1 = nn.Conv2d(512, 512, kernel_size=1,bias=True)
         self.deconv5_1 = nn.Conv2d(512, 512, kernel_size=5, padding=2,bias=True)
         self.deconv4_1 = nn.Conv2d(512, 256, kernel_size=5, padding=2,bias=True)
         self.deconv3_1 = nn.Conv2d(256, 128, kernel_size=5, padding=2,bias=True)
@@ -73,24 +73,24 @@ class RefinementNetwork(nn.Module):
         x4p, id4 = F.max_pool2d(x43,kernel_size=(2,2), stride=(2,2),return_indices=True)
 
         # Stage 5
-        # x51 = F.relu(self.conv5_1(x4p))
-        # x52 = F.relu(self.conv5_2(x51))
-        # x53 = F.relu(self.conv5_3(x52))
-        # x5p, id5 = F.max_pool2d(x53,kernel_size=(2,2), stride=(2,2),return_indices=True)
+        x51 = F.relu(self.conv5_1(x4p))
+        x52 = F.relu(self.conv5_2(x51))
+        x53 = F.relu(self.conv5_3(x52))
+        x5p, id5 = F.max_pool2d(x53,kernel_size=(2,2), stride=(2,2),return_indices=True)
 
         # Stage 6
-        # x61 = F.relu(self.conv6_1(x5p))
+        x61 = F.relu(self.conv6_1(x5p))
 
-        x51 = F.relu(self.conv5_1(x4p))
-        x51d = F.relu(self.deconv5_1(x51))
+        # x51 = F.relu(self.conv5_1(x4p))
+        # x51d = F.relu(self.deconv5_1(x51))
 
         # Stage 6d
-        # x61d = F.relu(self.deconv6_1(x61))
+        x61d = F.relu(self.deconv6_1(x61))
 
         # Stage 5d
-        # x5d = F.max_unpool2d(x61d,id5, kernel_size=2, stride=2)
-        # x5d = x5d + x53
-        # x51d = F.relu(self.deconv5_1(x5d))
+        x5d = F.max_unpool2d(x61d,id5, kernel_size=2, stride=2)
+        x5d = x5d + x53
+        x51d = F.relu(self.deconv5_1(x5d))
 
         # Stage 4d
         x4d = F.max_unpool2d(x51d, id4, kernel_size=2, stride=2)
