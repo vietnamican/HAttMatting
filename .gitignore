@@ -141,3 +141,4 @@ checkpoint*
 log*/
 True/
 images/
+*.pth

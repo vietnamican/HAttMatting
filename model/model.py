@@ -19,6 +19,7 @@ class Model(nn.Module):
         self.visualization = Visualization()
         self.apperance_cues_filtration = ApperanceCuesFiltration()
         self.refinement_network = RefinementNetwork()
+        self.refinement_network.load_state_dict(torch.load('refinement_checkpoint.pth'))
 
     def forward(self, x):
         original_feature = x
