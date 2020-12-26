@@ -154,7 +154,7 @@ def ssim_loss(y_pred, y_true):
 def trimap_prediction_loss(trimap_pred, trimap_true):
     trimap_true[trimap_true==0] = 0
     trimap_true[trimap_true==128] = 1
-    trimap_true[trimap_true==256] = 2
+    trimap_true[trimap_true==255] = 2
 
     trimap_pred = trimap_pred.transpose(1, 2).transpose(2, 3)
     trimap_pred = trimap_pred.contiguous()
