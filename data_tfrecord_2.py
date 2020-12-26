@@ -205,7 +205,7 @@ class HADataset(Dataset):
         # Flip array left to right randomly (prob=1:1)
         if np.random.random_sample() > 0.5:
             img = np.fliplr(img)
-            trimap = np.fliplr(trimap)
+            trimap = np.fliplr(trimap).copy()
             alpha = np.fliplr(alpha)
 
         img = transforms.ToPILImage()(img)
