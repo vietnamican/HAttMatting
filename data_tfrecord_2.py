@@ -158,7 +158,7 @@ def random_choice(trimap, different_sizes=[(320, 320), (480, 480), (640, 640)]):
         center_y = y_indices[ix]
         x = max(0, center_x - int(crop_width / 2))
         y = max(0, center_y - int(crop_height / 2))
-    return x, y
+    return x, y, crop_size
 
 
 class HADataset(Dataset):
