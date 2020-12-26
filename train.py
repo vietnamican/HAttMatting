@@ -36,6 +36,7 @@ def train(train_loader, model, optimizer, epoch, logger):
         alpha_label = alpha_label.type(
             torch.FloatTensor).to(device)  # [N, 320, 320]
         alpha_label = alpha_label.unsqueeze(1)
+        trimap_label = trimap_label.to(device)
         # alpha_label = alpha_label.reshape((-1, 2, im_size * im_size))  # [N, 320*320]
         with autocast():
             # Forward prop.
