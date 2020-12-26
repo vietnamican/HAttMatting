@@ -16,7 +16,7 @@ from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_
 from config import device, im_size, grad_clip, print_freq
 
 from model import Model
-from data_tfrecord import HADataset
+from data_tfrecord_2 import HADataset
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Using device {}'.format(device))
