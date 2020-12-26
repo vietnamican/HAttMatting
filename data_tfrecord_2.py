@@ -147,24 +147,7 @@ def gen_trimap(alpha):
 
 # Randomly crop (image, trimap) pairs centered on pixels in the unknown regions.
 def random_choice(trimap, different_sizes=[(320, 320), (480, 480), (640, 640)]):
-    h, w = trimap.shape
-    # print(h, w, c)
-    if h < 320 or w < 320:
-        h_ = h
-        w_ = w
-        if w < 320:
-            w_ = 320
-        if h < 320:
-            h_ = 320
-        padded_trimap = np.zeros((h_, w_))
-        padded_trimap[:h, :w] = trimap
-        trimap = padded_trimap
-    h, w = trimap.shape
-    while(True):
-        crop_size = random.choice(different_sizes)
-        if h >= crop_size[0] and w >= crop_size[1]:
-            break
-    crop_height, crop_width = crop_size
+    crop_size = random.choice(different_sizes)
     crop_height, crop_width = crop_size
     y_indices, x_indices = np.where(trimap == unknown_code)
     num_unknowns = len(y_indices)
@@ -175,16 +158,7 @@ def random_choice(trimap, different_sizes=[(320, 320), (480, 480), (640, 640)]):
         center_y = y_indices[ix]
         x = max(0, center_x - int(crop_width / 2))
         y = max(0, center_y - int(crop_height / 2))
-    return x, y, crop_size
-    # if h == crop_height:
-    #     x = 0
-    # else:
-    #     x = np.random.randint(0, high = h-crop_height)
-    # if w == crop_width:
-    #     y = 0
-    # else:
-    #     y = np.random.randint(0, high = w-crop_width)
-    # return x, y, crop_size
+    return x, y
 
 
 class HADataset(Dataset):
