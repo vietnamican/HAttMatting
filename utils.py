@@ -15,6 +15,8 @@ import torch.nn.functional as F
 from config import im_size, epsilon, epsilon_sqr
 
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def clip_gradient(optimizer, grad_clip):
     """
     Clips gradients computed during backpropagation to avoid explosion of gradients.
@@ -170,7 +172,7 @@ def alpha_prediction_loss(y_pred, y_true):
     return torch.sum(torch.sqrt(torch.pow(diff, 2) + epsilon_sqr)) / (y_true.numel() + epsilon)
 
 def alpha_prediction_loss_with_trimap(y_pred, y_true, trimap):
-    weighted = torch.zeros(trimap.shape).cuda()
+    weighted = torch.zeros(trimap.shape, device=device)
     weighted[trimap == 128] = 1.
     diff = y_pred - y_true
     diff = diff * weighted
