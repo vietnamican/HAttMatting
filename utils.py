@@ -161,7 +161,7 @@ def trimap_prediction_loss(trimap_pred, trimap_true):
     trimap_pred = trimap_pred.view(-1, 3)
     trimap_true = trimap_true.view(-1)
 
-    return F.cross_entropy(trimap_pred, trimap_true.type(torch.LongTensor), size_average=True)
+    return F.cross_entropy(trimap_pred, trimap_true, size_average=True)
 
 
 def alpha_prediction_loss(y_pred, y_true):
