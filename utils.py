@@ -136,7 +136,7 @@ def safe_crop(mat, x, y, crop_size=(im_size, im_size)):
 # alpha prediction loss: the abosolute difference between the ground truth alpha values and the
 # predicted alpha values at each pixel. However, due to the non-differentiable property of
 # absolute values, we use the following loss function to approximate it.
-def alpha_prediction_loss(y_pred, y_true):
+def ssim_loss(y_pred, y_true):
     if len(y_pred.shape) == 3:
         y_pred = y_pred.unsqueeze(0)
     if len(y_true.shape) == 3:
@@ -150,6 +150,23 @@ def alpha_prediction_loss(y_pred, y_true):
     # num_pixels = torch.sum(mask)
     # return torch.sum(torch.sqrt(torch.pow(diff, 2) + epsilon_sqr)) / (y_true.numel() + epsilon)
 
+def alpha_prediction_loss(y_pred, y_true):
+    diff = y_pred - y_true
+    diff = diff
+    return torch.sum(torch.sqrt(torch.pow(diff, 2) + epsilon_sqr)) / (y_true.numel() + epsilon)
+
+def alpha_prediction_loss_with_trimap(y_pred, y_true, trimap):
+    weighted = torch.zeros(trimap.shape).cuda()
+    weighted[trimap == 128] = 1.
+    diff = y_pred - y_true
+    diff = diff * weighted
+    alpha_loss = torch.sqrt(diff ** 2 + 1e-12)
+    return torch.sum(alpha_loss) / (weighted.sum() + 1.)
+    # mask = trimap[trimap==128]
+    # diff = y_pred - y_true
+    # diff = diff * mask
+    # num_pixels = torch.sum(mask)
+    # return torch.sum(torch.sqrt(torch.pow(diff, 2) + epsilon_sqr)) / (num_pixels + epsilon)
 
 # compute the MSE error given a prediction, a ground truth and a trimap.
 # pred: the predicted alpha matte
