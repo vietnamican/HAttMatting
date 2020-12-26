@@ -119,3 +119,38 @@ class ChannelGate(nn.Module):
         scale = F.sigmoid(channel_att_sum).unsqueeze(
             2).unsqueeze(3).expand_as(x)
         return x * scale
+
+
+# class Model(nn.Module):
+#     def __init__(self):
+#         super(Model, self).__init__()
+#         self.features_extractor = FeatureExtractor()
+#         self.aspp = ASPP(512, 16, nn.BatchNorm2d)
+#         self.pyramidal_features_distillation = PyramidalFeaturesDistillation()
+#         self.visualization = Visualization()
+#         self.apperance_cues_filtration = ApperanceCuesFiltration()
+#         self.refinement_network = RefinementNetwork()
+#         self.refinement_network.load_state_dict(torch.load('refinement_checkpoint.pth'))
+
+#     def forward(self, x):
+#         original_feature = x
+#         low_level_feature, high_level_feature = self.features_extractor(x)
+#         x = self.aspp(high_level_feature)
+#         x = self.pyramidal_features_distillation(x)
+#         visualize = self.visualization(x)
+#         x = self.apperance_cues_filtration(x, low_level_feature)
+#         x = torch.cat((original_feature, x), 1)
+#         _, x = self.refinement_network(x)
+#         return x
+
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.encode_network = EncodeNetwork()
+        # self.predict_alpha = PredictAlpha()
+        # self.predict_trimap = PredictTrimap()
+        # self.refinement_network = RefinementNetwork()
+        # self.refinement_network = RefinementNetwork()
+        # self.refinement_network.load_state_dict(torch.load('refinement_checkpoint.pth'))
+    def forward(self, x):
+        return self.encode_network(x)

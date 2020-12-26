@@ -12,7 +12,7 @@ from tensorboardX import SummaryWriter
 from torch.cuda.amp import autocast, GradScaler
 
 from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, get_learning_rate, \
-    alpha_prediction_loss, alpha_prediction_loss_with_trimap, ssim_loss, adjust_learning_rate
+    alpha_prediction_loss, alpha_prediction_loss_with_trimap, ssim_loss, trimap_prediction_loss, adjust_learning_rate
 from config import device, im_size, grad_clip, print_freq
 
 from model import Model
@@ -30,7 +30,7 @@ def train(train_loader, model, optimizer, epoch, logger):
     # loss_function = alpha_prediction_loss
     loss_function = alpha_prediction_loss_with_trimap
     # Batches
-    for i, (img, alpha_label, trimap) in enumerate(train_loader):
+    for i, (img, alpha_label, trimap_label) in enumerate(train_loader):
         # Move to GPU, if available
         img = img.type(torch.FloatTensor).to(device)  # [N, 4, 320, 320]
         alpha_label = alpha_label.type(
@@ -39,12 +39,15 @@ def train(train_loader, model, optimizer, epoch, logger):
         # alpha_label = alpha_label.reshape((-1, 2, im_size * im_size))  # [N, 320*320]
         with autocast():
             # Forward prop.
-            alpha_out = model(img)  # [N, 3, 320, 320]
+            trimap_out, alpha_out = model(img)  # [N, 3, 320, 320]
             # alpha_out = alpha_out.reshape((-1, 1, im_size * im_size))  # [N, 320*320]
 
             # Calculate loss
             # loss = criterion(alpha_out, alpha_label)
-            loss = alpha_prediction_loss(alpha_out, alpha_label)
+            alpha_loss = alpha_prediction_loss_with_trimap(
+                alpha_out, alpha_label, trimap_label)
+            trimap_loss = trimap_prediction_loss(trimap_out, trimap_label)
+            loss = 0.5*alpha_loss + 0.5*trimap_loss
 
         # Back prop.
         optimizer.zero_grad()
@@ -138,8 +141,9 @@ if __name__ == '__main__':
         model.load_state_dict(model_state_dict)
         model = model.to(device)
         if args.reset_optimizer:
-            optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-        else: 
+            optimizer = torch.optim.Adam(
+                model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        else:
             optimizer = torch.optim.Adam(model.parameters())
             optimizer_state_dict = checkpoint['optimizer_state_dict']
             optimizer.load_state_dict(optimizer_state_dict)

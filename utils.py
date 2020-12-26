@@ -9,6 +9,7 @@ from skimage.measure import label
 import scipy.ndimage
 import scipy.ndimage.morphology
 from pytorch_msssim import ssim, ms_ssim, SSIM, MS_SSIM
+import torch.nn.functional as F
 # import pytorch_ssim
 
 from config import im_size, epsilon, epsilon_sqr
@@ -149,6 +150,19 @@ def ssim_loss(y_pred, y_true):
     # return ms_ssim(y_pred, y_true, data_range=1, size_average=True)
     # num_pixels = torch.sum(mask)
     # return torch.sum(torch.sqrt(torch.pow(diff, 2) + epsilon_sqr)) / (y_true.numel() + epsilon)
+
+def trimap_prediction_loss(trimap_pred, trimap_true):
+    trimap_true[trimap_true==0] = 0
+    trimap_true[trimap_true==128] = 1
+    trimap_true[trimap_true==256] = 2
+
+    trimap_pred = trimap_pred.transpose(1, 2).transpose(2, 3)
+    trimap_pred = trimap_pred.contiguous()
+    trimap_pred = trimap_pred.view(-1, 3)
+    trimap_true = trimap_true.view(-1)
+
+    return F.cross_entropy(trimap_pred, trimap_true, size_average=True)
+
 
 def alpha_prediction_loss(y_pred, y_true):
     diff = y_pred - y_true
