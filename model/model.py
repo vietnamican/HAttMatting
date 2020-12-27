@@ -136,35 +136,25 @@ class Model(nn.Module):
             x6d = self.deconv6_1(torch.cat((x61, x6t), 1))
             # Stage 5d
             x5d = torch.cat((torch.add(F.max_unpool2d(x6d, id5, kernel_size=2, stride=2, output_size=s5), x53), x5t), 1)
-            print('x5d', x5d.shape)
             # x5d = x5d + x53
             # x51d = self.deconv5_1(x5d)
             # Stage 4d
-            print('x4t', x4t.shape)
             x4d = torch.cat((torch.add(F.max_unpool2d(self.deconv5_1(x5d), id4, kernel_size=2, stride=2, output_size=s4), x43), x4t), 1)
-            print('x4d', x4d.shape)
             # x4d = x4d + x43
             # x41d = self.deconv4_1(x4d)
             # Stage 3d
-            print('x3t', x3t.shape)
             x3d = torch.cat((torch.add(F.max_unpool2d(self.deconv4_1(x4d), id3, kernel_size=2, stride=2, output_size=s3), x33), x3t), 1)
-            print('x3d', x3d.shape)
             # x3d = x3d + x33
             # x31d = self.deconv3_1(x3d)
             # Stage 2d
-            print('x2t', x2t.shape)
             x2d = torch.cat((torch.add(F.max_unpool2d(self.deconv3_1(x3d), id2, kernel_size=2, stride=2, output_size=s2), x22), x2t), 1)
-            print('x2d', x2d.shape)
             # x2d = x2d + x22
             # x21d = self.deconv2_1(x2d)
             # Stage 1d
-            print('x1t', x1t.shape)
             x1d = torch.cat((torch.add(F.max_unpool2d(self.deconv2_1(x2d), id1, kernel_size=2, stride=2, output_size=s1), x12), x1t), 1)
-            print('x1d', x1d.shape)
             # x1d = x1d + x12
             # x12d = self.deconv1_1(x1d)
             # Should add sigmoid? github repo add so.
-            print('x1t', x1t.shape)
             raw_alpha = self.deconv1(torch.cat((self.deconv1_1(x1d), x1t), 1))
             pred_mattes = torch.sigmoid(raw_alpha)
 
