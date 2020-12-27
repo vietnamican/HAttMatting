@@ -133,9 +133,9 @@ if __name__ == '__main__':
         pred = pred.cpu().numpy()
         pred = pred.reshape((-1, h, w))  # [320, 320]
 
-        pred = torch.argmax(pred, dim=0)
-        pred[pred==1] == 128
-        pred[pred==2] == 255
+        pred = pred.argmax(axis=0)
+        pred[pred==1] = 128
+        pred[pred==2] = 255
 
         cv.imwrite('images/test/out/' + args.output_folder + '/' + trimap_name, pred)
         # except:
