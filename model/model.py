@@ -68,6 +68,8 @@ class Model(nn.Module):
         self.refine_conv3 = ConvBatchnormRelu(64, 64, kernel_size=3, padding=1, bias=True)
         self.refine_pred = ConvBatchnormRelu(64, 1, kernel_size=3, padding=1, bias=True)
         
+        # if stage == 'train_alpha':
+        #     self.freeze_trimap_path()
     def forward(self, x):
         # Stage 1
         # x11 = self.conv1_1(x)
@@ -173,6 +175,21 @@ class Model(nn.Module):
             return raw_trimap, pred_alpha
         return raw_trimap, None
 
+    def freeze_trimap_path(self):
+        for name, p in self.named_parameters():
+            print(name)
+            if name.startswith('conv') or name.startswith('trimap'):
+                p.requires_grad = False
+    def migrate(self, model):
+        checkpoint = torch.load(model, map_location=lambda storage, loc: storage)
+        model_state_dict = checkpoint['model_state_dict']
+        for name, p in self.named_parameters():
+            if p.data.shape == model_state_dict[name].shape: 
+                p.data = model_state_dict[name]
+                # print('true {} vs {}, {}'.format(p.data.shape, model_state_dict[name].shape, name))
+            # else:
+                # print('false {} vs {}, {}'.format(p.data.shape, model_state_dict[name].shape, name))
+              
 if __name__ == "__main__":
     model = EncodeNetwork()
     summary(model, (3, 320, 320))
