@@ -49,13 +49,13 @@ class Model(nn.Module):
         #####################
         ####### Alpha  ######
         #####################
-        self.deconv6_1 = ConvBatchnormRelu(512, 512, kernel_size=1,bias=True)
-        self.deconv5_1 = ConvBatchnormRelu(512, 512, kernel_size=5, padding=2,bias=True)
-        self.deconv4_1 = ConvBatchnormRelu(512, 256, kernel_size=5, padding=2,bias=True)
-        self.deconv3_1 = ConvBatchnormRelu(256, 128, kernel_size=5, padding=2,bias=True)
-        self.deconv2_1 = ConvBatchnormRelu(128, 64, kernel_size=5, padding=2,bias=True)
-        self.deconv1_1 = ConvBatchnormRelu(64, 64, kernel_size=5, padding=2,bias=True)
-        self.deconv1 = ConvBatchnormRelu(64, 1, kernel_size=5, padding=2,bias=True)
+        self.deconv6_1 = ConvBatchnormRelu(1024, 512, kernel_size=1,bias=True)
+        self.deconv5_1 = ConvBatchnormRelu(1024, 512, kernel_size=5, padding=2,bias=True)
+        self.deconv4_1 = ConvBatchnormRelu(1024, 256, kernel_size=5, padding=2,bias=True)
+        self.deconv3_1 = ConvBatchnormRelu(512, 128, kernel_size=5, padding=2,bias=True)
+        self.deconv2_1 = ConvBatchnormRelu(256, 64, kernel_size=5, padding=2,bias=True)
+        self.deconv1_1 = ConvBatchnormRelu(128, 64, kernel_size=5, padding=2,bias=True)
+        self.deconv1 = ConvBatchnormRelu(128, 1, kernel_size=5, padding=2,bias=True)
 
         # if args.stage == 2:
         #     # for stage2 training
@@ -108,9 +108,9 @@ class Model(nn.Module):
 
 
         # trimap 
-        # x61t = self.trimap_deconv6_1(x61)
+        x6t = self.trimap_deconv6_1(x61)
         # Stage 5d
-        x5t = torch.add(F.max_unpool2d(self.trimap_deconv6_1(x61), id5, kernel_size=2, stride=2, output_size=s5), x53)
+        x5t = torch.add(F.max_unpool2d(x6t, id5, kernel_size=2, stride=2, output_size=s5), x53)
         # x5t = x5t + x53
         # x51t = self.trimap_deconv5_1(x5t)
         # Stage 4d
@@ -133,29 +133,39 @@ class Model(nn.Module):
 
         if self.stage == 'train_alpha':
             # Stage 6d
-            # x61d = self.deconv6_1(x61)
+            x6d = self.deconv6_1(torch.cat((x61, x6t), 1))
             # Stage 5d
-            x5d = torch.add(F.max_unpool2d(self.deconv6_1(x61), id5, kernel_size=2, stride=2, output_size=s5), x53)
+            x5d = torch.cat((torch.add(F.max_unpool2d(x6d, id5, kernel_size=2, stride=2, output_size=s5), x53), x5t), 1)
+            print('x5d', x5d.shape)
             # x5d = x5d + x53
             # x51d = self.deconv5_1(x5d)
             # Stage 4d
-            x4d = torch.add(F.max_unpool2d(self.deconv5_1(x5d), id4, kernel_size=2, stride=2, output_size=s4), x43)
+            print('x4t', x4t.shape)
+            x4d = torch.cat((torch.add(F.max_unpool2d(self.deconv5_1(x5d), id4, kernel_size=2, stride=2, output_size=s4), x43), x4t), 1)
+            print('x4d', x4d.shape)
             # x4d = x4d + x43
             # x41d = self.deconv4_1(x4d)
             # Stage 3d
-            x3d = torch.add(F.max_unpool2d(self.deconv4_1(x4d), id3, kernel_size=2, stride=2, output_size=s3), x33)
+            print('x3t', x3t.shape)
+            x3d = torch.cat((torch.add(F.max_unpool2d(self.deconv4_1(x4d), id3, kernel_size=2, stride=2, output_size=s3), x33), x3t), 1)
+            print('x3d', x3d.shape)
             # x3d = x3d + x33
             # x31d = self.deconv3_1(x3d)
             # Stage 2d
-            x2d = torch.add(F.max_unpool2d(self.deconv3_1(x3d), id2, kernel_size=2, stride=2, output_size=s2), x22)
+            print('x2t', x2t.shape)
+            x2d = torch.cat((torch.add(F.max_unpool2d(self.deconv3_1(x3d), id2, kernel_size=2, stride=2, output_size=s2), x22), x2t), 1)
+            print('x2d', x2d.shape)
             # x2d = x2d + x22
             # x21d = self.deconv2_1(x2d)
             # Stage 1d
-            x1d = torch.add(F.max_unpool2d(self.deconv2_1(x2d), id1, kernel_size=2, stride=2, output_size=s1), x12)
+            print('x1t', x1t.shape)
+            x1d = torch.cat((torch.add(F.max_unpool2d(self.deconv2_1(x2d), id1, kernel_size=2, stride=2, output_size=s1), x12), x1t), 1)
+            print('x1d', x1d.shape)
             # x1d = x1d + x12
             # x12d = self.deconv1_1(x1d)
             # Should add sigmoid? github repo add so.
-            raw_alpha = self.deconv1(self.deconv1_1(x1d))
+            print('x1t', x1t.shape)
+            raw_alpha = self.deconv1(torch.cat((self.deconv1_1(x1d), x1t), 1))
             pred_mattes = torch.sigmoid(raw_alpha)
 
             # Stage2 refine conv1
