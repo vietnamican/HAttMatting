@@ -13,7 +13,7 @@ from model import Model
 
 if __name__ == '__main__':
     model = Model('train_alpha')
-    summary(model, (3, 320, 320))
+    summary(model, (3, 322, 322))
     # inp = torch.zeros((2, 3, 320, 320))
     # out1, out2 = model(inp)
     # print(out1.shape, out2.shape)
