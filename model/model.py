@@ -124,7 +124,7 @@ class Model(nn.Module):
         x1t = torch.add(F.max_unpool2d(self.trimap_deconv2_1(x2t), id1, kernel_size=2, stride=2), x12)
         # x1t = x1t + x12
         # x12t = self.trimap_deconv1_1(x1t)
-        raw_trimap = F.softmax(self.trimap_deconv1(self.trimap_deconv1_1(x1t)), dim=1)
+        raw_trimap = self.trimap_deconv1(self.trimap_deconv1_1(x1t))
 
 
         # Stage 6d

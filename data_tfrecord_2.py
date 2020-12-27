@@ -9,10 +9,11 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 import tensorflow as tf
 
-import tfrecord_creator	
+import tfrecord_creator
 from config import im_size, unknown_code, fg_path, bg_path, a_path, num_valid
 from utils import safe_crop, parse_args
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 global args
 args = parse_args()
 
@@ -20,7 +21,8 @@ args = parse_args()
 # Just normalization for validation
 data_transforms = {
     'train': transforms.Compose([
-        transforms.ColorJitter(brightness=0.125, contrast=0.125, saturation=0.125),
+        transforms.ColorJitter(
+            brightness=0.125, contrast=0.125, saturation=0.125),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ]),
@@ -30,21 +32,23 @@ data_transforms = {
     ]),
 }
 
+
 def return_raw_image(dataset):
     dataset_raw = []
     for image_features in dataset:
         image_raw = image_features['image'].numpy()
         image = tf.image.decode_jpeg(image_raw)
         dataset_raw.append(image)
-        
+
     return dataset_raw
+
 
 fg_dataset = tfrecord_creator.read("fg", "./data/tfrecord/")
 bg_dataset = tfrecord_creator.read("bg", "./data/tfrecord/")
-a_dataset  = tfrecord_creator.read("a",  "./data/tfrecord/")
+a_dataset = tfrecord_creator.read("a",  "./data/tfrecord/")
 fg_dataset = list(fg_dataset)
 bg_dataset = list(bg_dataset)
-a_dataset  = list(a_dataset)
+a_dataset = list(a_dataset)
 print("___________________")
 print(len(fg_dataset))
 print(len(bg_dataset))
@@ -54,19 +58,23 @@ print("___________________")
 # bg_raw = return_raw_image(bg_dataset)
 # a_raw  = return_raw_image(a_dataset)
 
+
 def get_raw(type_of_dataset, count):
     if type_of_dataset == 'fg':
         temp = fg_dataset[count]['image']
-        channels=3
+        channels = 3
     elif type_of_dataset == 'bg':
         temp = bg_dataset[count]['image']
-        channels=3
-    else :
+        channels = 3
+    else:
         temp = a_dataset[count]['image']
-        channels=1
+        channels = 1
     temp = tf.image.decode_jpeg(temp, channels=channels)
-    temp = np.asarray(temp)
+    temp = transforms.ToTensor()(np.asarray(temp))
+    # temp = torch.Tensor(temp, device=device, dtype=torch.float16)
+    # temp = np.asarray(temp)
     return temp
+
 
 kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3, 3))
 with open('Combined_Dataset/Training_set/training_fg_names.txt') as f:
@@ -105,10 +113,10 @@ def composite4(fg, bg, a, w, h):
     if bg_h > h:
         y = np.random.randint(0, bg_h - h)
     if bg.ndim == 2:
-        bg = np.reshape(bg, (h,w,1))
+        bg = np.reshape(bg, (h, w, 1))
     bg = np.array(bg[y:y + h, x:x + w], np.float32)
-    bg = np.reshape(bg, (h,w,-1))
-    fg = np.reshape(fg, (h,w,-1))
+    bg = np.reshape(bg, (h, w, -1))
+    fg = np.reshape(fg, (h, w, -1))
     alpha = np.zeros((h, w, 1), np.float32)
     alpha[:, :, 0] = a / 255.
     im = alpha * fg + (1 - alpha) * bg
@@ -119,7 +127,8 @@ def composite4(fg, bg, a, w, h):
 def process(fcount, bcount):
     im = get_raw("fg", fcount)
     a = get_raw("a", fcount)
-    a = np.reshape(a, (a.shape[0], a.shape[1]))
+    a = a.view(a.shape[0], a.shape[1])
+    # a = np.reshape(a, (a.shape[0], a.shape[1]))
     h, w = im.shape[:2]
     bg = get_raw("bg", bcount)
     bh, bw = bg.shape[:2]
@@ -127,7 +136,8 @@ def process(fcount, bcount):
     hratio = h / bh
     ratio = wratio if wratio > hratio else hratio
     if ratio > 1:
-        bg = cv.resize(src=bg, dsize=(math.ceil(bw * ratio), math.ceil(bh * ratio)), interpolation=cv.INTER_CUBIC)
+        bg = cv.resize(src=bg, dsize=(math.ceil(bw * ratio),
+                                      math.ceil(bh * ratio)), interpolation=cv.INTER_CUBIC)
 
     return composite4(im, bg, a, w, h)
 
@@ -216,11 +226,12 @@ class HADataset(Dataset):
         y = alpha / 255.
         # mask = np.equal(trimap, 128).astype(np.float32)
         # y[1, :, :] = mask
-        
+
         return x, y, trimap
 
     def __len__(self):
         return len(self.names)
+
 
 def gen_names():
     num_fgs = 431

@@ -12,7 +12,7 @@ from tensorboardX import SummaryWriter
 from torch.cuda.amp import autocast, GradScaler
 
 from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, get_learning_rate, \
-    alpha_prediction_loss, alpha_prediction_loss_with_trimap, ssim_loss, trimap_prediction_loss, adjust_learning_rate
+    alpha_prediction_loss, alpha_prediction_loss_with_trimap, ssim_loss, trimap_prediction_loss
 from config import device, im_size, grad_clip, print_freq
 
 from model import Model
@@ -29,6 +29,7 @@ def train(train_loader, model, optimizer, epoch, logger):
     scaler = GradScaler()
     # loss_function = alpha_prediction_loss
     loss_function = alpha_prediction_loss_with_trimap
+
     # Batches
     for i, (img, alpha_label, trimap_label) in enumerate(train_loader):
         # Move to GPU, if available
@@ -78,48 +79,6 @@ def train(train_loader, model, optimizer, epoch, logger):
     save_checkpoint(epoch, 0, model, optimizer, losses.avg, False)
     return losses.avg
 
-# def train(epoch, total_epoch, loader, model, optimizer, log_interval=1):
-#     train_losses = []
-#     train_counter = []
-#     model.to(device).train()
-#     print('Train Epoch {} of {}'.format(epoch, total_epoch))
-#     t = tqdm(loader)
-#     for batch_idx, (image, target) in enumerate(t):
-#         image = image.to(device)
-#         target = target.to(device)
-#         optimizer.zero_grad()
-#         output = model(image)
-#         loss = F.nll_loss(output, target)
-#         loss.backward()
-#         optimizer.step()
-#         if batch_idx % log_interval == 0:
-#             train_losses.append(loss.item())
-#             t.set_postfix({'Loss': sum(train_losses)/len(train_losses)})
-#             train_counter.append(batch_idx*64 + (epoch + 1)
-#                                  * len(train_loader.dataset))
-#     torch.save(model.state_dict(), 'result/model.pth')
-#     torch.save(optimizer.state_dict(), 'result/optimizer.pth')
-
-# def test(loader, model):
-#     model.to(device).eval()
-#     test_loss = 0
-#     test_losses = []
-#     correct = 0
-#     t = tqdm(loader)
-#     with torch.no_grad():
-#         for image, target in t:
-#             image = image.to(device)
-#             target = target.to(device)
-#             output = model(image)
-#             test_loss += F.nll_loss(output, target, reduction='sum').item()
-#             pred = output.data.max(1, keepdim=True)[1]
-#             correct += pred.eq(target.data.view_as(pred)).sum()
-#         test_loss /= len(test_loader.dataset)
-#         test_losses.append(test_loss)
-#         print('\nTest set: Avg. loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-#             test_loss, correct, len(test_loader.dataset),
-#             100. * correct / len(test_loader.dataset)))
-
 
 if __name__ == '__main__':
     global args
@@ -165,7 +124,8 @@ if __name__ == '__main__':
         else:
             np.random.seed(7)
     summary(model, (3, 320, 320), depth=6)
-    train_loader = DataLoader(HADataset('train'), batch_size=8, shuffle=True, pin_memory=True, num_workers=8)
+    train_loader = DataLoader(
+        HADataset('train'), batch_size=8, shuffle=True, pin_memory=True, num_workers=8)
     # optimizer = optim.Adam(model.parameters())
     total_training_time = 0
     n_epochs = args.end_epoch

@@ -17,6 +17,7 @@ from config import im_size, epsilon, epsilon_sqr
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+
 def clip_gradient(optimizer, grad_clip):
     """
     Clips gradients computed during backpropagation to avoid explosion of gradients.
@@ -31,7 +32,7 @@ def clip_gradient(optimizer, grad_clip):
 
 def save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss, is_best):
     state = {'epoch': epoch,
-            #  'epochs_since_improvement': epochs_since_improvement,
+             #  'epochs_since_improvement': epochs_since_improvement,
              'loss': loss,
              'model_state_dict': model.state_dict(),
              'optimizer_state_dict': optimizer.state_dict(),
@@ -90,24 +91,34 @@ def accuracy(scores, targets, k=1):
     _, ind = scores.topk(k, 1, True, True)
     correct = ind.eq(targets.view(-1, 1).expand_as(ind))
     correct_total = correct.view(-1).float().sum()  # 0D tensor
-    return correct_total.item() * (100.0 / batch_size)  
+    return correct_total.item() * (100.0 / batch_size)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train face network')
     # general
-    parser.add_argument('--end-epoch', type=int, default=1000, help='training epoch size.')
-    parser.add_argument('--start-epoch', type=int, default=1000, help='start training epoch size.')
-    parser.add_argument('--lr', type=float, default=0.01, help='start learning rate')
-    parser.add_argument('--lr-step', type=int, default=10, help='period of learning rate decay')
+    parser.add_argument('--end-epoch', type=int,
+                        default=1000, help='training epoch size.')
+    parser.add_argument('--start-epoch', type=int,
+                        default=1000, help='start training epoch size.')
+    parser.add_argument('--lr', type=float, default=0.01,
+                        help='start learning rate')
+    parser.add_argument('--lr-step', type=int, default=10,
+                        help='period of learning rate decay')
     parser.add_argument('--optimizer', default='sgd', help='optimizer')
-    parser.add_argument('--weight-decay', type=float, default=0.0, help='weight decay')
+    parser.add_argument('--weight-decay', type=float,
+                        default=0.0, help='weight decay')
     parser.add_argument('--mom', type=float, default=0.9, help='momentum')
-    parser.add_argument('--batch-size', type=int, default=32, help='batch size in each context')
-    parser.add_argument('--checkpoint', type=str, default=None, help='checkpoint')
-    parser.add_argument('--pretrained', type=bool, default=True, help='pretrained model')
-    parser.add_argument('--logdir', type=str, default=True, help='logdir model')
-    parser.add_argument('--reset-optimizer', type=bool, default=False, help='reset optimizer state')
+    parser.add_argument('--batch-size', type=int, default=32,
+                        help='batch size in each context')
+    parser.add_argument('--checkpoint', type=str,
+                        default=None, help='checkpoint')
+    parser.add_argument('--pretrained', type=bool,
+                        default=True, help='pretrained model')
+    parser.add_argument('--logdir', type=str,
+                        default=True, help='logdir model')
+    parser.add_argument('--reset-optimizer', type=bool,
+                        default=False, help='reset optimizer state')
     args = parser.parse_args()
     return args
 
@@ -132,7 +143,8 @@ def safe_crop(mat, x, y, crop_size=(im_size, im_size)):
     h, w = crop.shape[:2]
     ret[0:h, 0:w] = crop
     if crop_size != (im_size, im_size):
-        ret = cv.resize(ret, dsize=(im_size, im_size), interpolation=cv.INTER_NEAREST)
+        ret = cv.resize(ret, dsize=(im_size, im_size),
+                        interpolation=cv.INTER_NEAREST)
     return ret
 
 
@@ -147,29 +159,81 @@ def ssim_loss(y_pred, y_true):
     # mask = y_true
     # diff = y_pred - y_true
     # diff = diff
-    return 1 - ms_ssim(y_pred, y_true, data_range=1, size_average=True )
+    return 1 - ms_ssim(y_pred, y_true, data_range=1, size_average=True)
     # return 1 - pytorch_ssim.ssim(y_pred, y_true)
     # return ms_ssim(y_pred, y_true, data_range=1, size_average=True)
     # num_pixels = torch.sum(mask)
     # return torch.sum(torch.sqrt(torch.pow(diff, 2) + epsilon_sqr)) / (y_true.numel() + epsilon)
 
+
+class SegmentationLosses(object):
+    def __init__(self, weight=None, size_average=True, batch_average=True, ignore_index=255):
+        self.ignore_index = ignore_index
+        self.weight = weight
+        self.size_average = size_average
+        self.batch_average = batch_average
+        self.cuda = cuda
+
+    def build_loss(self, mode='ce'):
+        """Choices: ['ce' or 'focal']"""
+        if mode == 'ce':
+            return self.CrossEntropyLoss
+        elif mode == 'focal':
+            return self.FocalLoss
+        else:
+            raise NotImplementedError
+
+    def CrossEntropyLoss(self, logit, target):
+        n, c, h, w = logit.size()
+        criterion = nn.CrossEntropyLoss(weight=self.weight, ignore_index=self.ignore_index,
+                                        size_average=self.size_average)
+        criterion = criterion.to(device)
+
+        loss = criterion(logit, target.long())
+
+        if self.batch_average:
+            loss /= n
+
+        return loss
+
+    def FocalLoss(self, logit, target, gamma=2, alpha=0.5):
+        n, c, h, w = logit.size()
+        criterion = nn.CrossEntropyLoss(weight=self.weight, ignore_index=self.ignore_index,
+                                        size_average=self.size_average)
+
+        criterion = criterion.to(device)
+
+        logpt = -criterion(logit, target.long())
+        pt = torch.exp(logpt)
+        if alpha is not None:
+            logpt *= alpha
+        loss = -((1 - pt) ** gamma) * logpt
+
+        if self.batch_average:
+            loss /= n
+
+        return loss
+
+
 def trimap_prediction_loss(trimap_pred, trimap_true):
-    trimap_true[trimap_true==0] = 0
-    trimap_true[trimap_true==128] = 1
-    trimap_true[trimap_true==255] = 2
+    trimap_true[trimap_true == 0] = 0
+    trimap_true[trimap_true == 128] = 1
+    trimap_true[trimap_true == 255] = 2
+    criterion = SegmentationLosses(batch_average=True).build_loss('ce')
+    return criterion(trimap_pred, trimap_true)
+    # trimap_pred = trimap_pred.transpose(1, 2).transpose(2, 3)
+    # trimap_pred = trimap_pred.contiguous()
+    # trimap_pred = trimap_pred.view(-1, 3)
+    # trimap_true = trimap_true.view(-1)
 
-    trimap_pred = trimap_pred.transpose(1, 2).transpose(2, 3)
-    trimap_pred = trimap_pred.contiguous()
-    trimap_pred = trimap_pred.view(-1, 3)
-    trimap_true = trimap_true.view(-1)
-
-    return F.cross_entropy(trimap_pred, trimap_true, size_average=True)
+    # return F.cross_entropy(trimap_pred, trimap_true, size_average=True)
 
 
 def alpha_prediction_loss(y_pred, y_true):
     diff = y_pred - y_true
     diff = diff
     return torch.sum(torch.sqrt(torch.pow(diff, 2) + epsilon_sqr)) / (y_true.numel() + epsilon)
+
 
 def alpha_prediction_loss_with_trimap(y_pred, y_true, trimap):
     weighted = torch.zeros(trimap.shape, device=device)
@@ -189,6 +253,8 @@ def alpha_prediction_loss_with_trimap(y_pred, y_true, trimap):
 # target: the ground truth alpha matte
 # trimap: the given trimap
 #
+
+
 def compute_mse(pred, alpha, trimap):
     num_pixels = float((trimap == 128).sum())
     return ((pred - alpha) ** 2).sum() / num_pixels
@@ -199,6 +265,7 @@ def compute_mse(pred, alpha, trimap):
 def compute_sad(pred, alpha):
     diff = np.abs(pred - alpha)
     return np.sum(diff) / 1000
+
 
 def gauss(x, sigma):
     y = np.exp(-x ** 2 / (2 * sigma ** 2)) / (sigma * np.sqrt(2 * np.pi))
@@ -212,7 +279,8 @@ def dgauss(x, sigma):
 
 def gaussgradient(im, sigma):
     epsilon = 1e-2
-    halfsize = np.ceil(sigma * np.sqrt(-2 * np.log(np.sqrt(2 * np.pi) * sigma * epsilon))).astype(np.int32)
+    halfsize = np.ceil(
+        sigma * np.sqrt(-2 * np.log(np.sqrt(2 * np.pi) * sigma * epsilon))).astype(np.int32)
     size = 2 * halfsize + 1
     hx = np.zeros((size, size))
     for i in range(0, size):
@@ -261,7 +329,8 @@ def compute_connectivity_error(pred, target, trimap, step=0.1):
         pred_alpha_thresh = (pred >= thresh_steps[i]).astype(np.int)
         target_alpha_thresh = (target >= thresh_steps[i]).astype(np.int)
 
-        omega = getLargestCC(pred_alpha_thresh * target_alpha_thresh).astype(np.int)
+        omega = getLargestCC(pred_alpha_thresh *
+                             target_alpha_thresh).astype(np.int)
         flag = ((l_map == -1) & (omega == 0)).astype(np.int)
         l_map[flag == 1] = thresh_steps[i - 1]
 
@@ -275,10 +344,13 @@ def compute_connectivity_error(pred, target, trimap, step=0.1):
 
     return loss / 1000.
 
+
 def draw_str(dst, target, s):
     x, y = target
-    cv.putText(dst, s, (x + 1, y + 1), cv.FONT_HERSHEY_PLAIN, 1.0, (0, 0, 0), thickness=2, lineType=cv.LINE_AA)
-    cv.putText(dst, s, (x, y), cv.FONT_HERSHEY_PLAIN, 1.0, (255, 255, 255), lineType=cv.LINE_AA)
+    cv.putText(dst, s, (x + 1, y + 1), cv.FONT_HERSHEY_PLAIN,
+               1.0, (0, 0, 0), thickness=2, lineType=cv.LINE_AA)
+    cv.putText(dst, s, (x, y), cv.FONT_HERSHEY_PLAIN,
+               1.0, (255, 255, 255), lineType=cv.LINE_AA)
 
 
 def ensure_folder(folder):
