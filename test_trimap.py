@@ -126,17 +126,17 @@ if __name__ == '__main__':
         # Move to GPU, if available
         x = x.type(torch.FloatTensor).to(device)  # [1, 4, 320, 320]
         alpha = alpha / 255.
-        try:
-            with torch.no_grad():
-                pred, _ = model(x)  # [1, 4, 320, 320]
+        # try:
+        with torch.no_grad():
+            pred, _ = model(x)  # [1, 4, 320, 320]
 
-            pred = pred.cpu().numpy()
-            pred = pred.reshape((-1, h, w))  # [320, 320]
+        pred = pred.cpu().numpy()
+        pred = pred.reshape((-1, h, w))  # [320, 320]
 
-            pred = torch.argmax(pred, dim=0)
-            pred[pred==1] == 128
-            pred[pred==2] == 255
+        pred = torch.argmax(pred, dim=0)
+        pred[pred==1] == 128
+        pred[pred==2] == 255
 
-            cv.imwrite('images/test/out/' + args.output_folder + '/' + trimap_name, pred)
-        except:
-            pass
+        cv.imwrite('images/test/out/' + args.output_folder + '/' + trimap_name, pred)
+        # except:
+        #     pass
