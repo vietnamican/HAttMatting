@@ -16,10 +16,9 @@ def ssim_loss(y_pred, y_true):
 
 
 class SegmentationLosses(object):
-    def __init__(self, weight=None, size_average=True, batch_average=True, ignore_index=255):
+    def __init__(self, weight=None, batch_average=True, ignore_index=255):
         self.ignore_index = ignore_index
         self.weight = weight
-        self.size_average = size_average
         self.batch_average = batch_average
 
     def build_loss(self, mode='ce'):
@@ -33,8 +32,8 @@ class SegmentationLosses(object):
 
     def CrossEntropyLoss(self, logit, target):
         n, c, h, w = logit.size()
-        criterion = nn.CrossEntropyLoss(weight=self.weight, ignore_index=self.ignore_index,
-                                        size_average=self.size_average)
+        criterion = nn.CrossEntropyLoss(
+            weight=self.weight, ignore_index=self.ignore_index)
         criterion = criterion.to(device)
 
         loss = criterion(logit, target.long())
@@ -46,8 +45,8 @@ class SegmentationLosses(object):
 
     def FocalLoss(self, logit, target, gamma=2, alpha=0.5):
         n, c, h, w = logit.size()
-        criterion = nn.CrossEntropyLoss(weight=self.weight, ignore_index=self.ignore_index,
-                                        size_average=self.size_average)
+        criterion = nn.CrossEntropyLoss(
+            weight=self.weight, ignore_index=self.ignore_index)
 
         criterion = criterion.to(device)
 
