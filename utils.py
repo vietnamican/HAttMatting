@@ -10,6 +10,7 @@ import scipy.ndimage
 import scipy.ndimage.morphology
 from pytorch_msssim import ssim, ms_ssim, SSIM, MS_SSIM
 import torch.nn.functional as F
+import torch.nn as nn
 # import pytorch_ssim
 
 from config import im_size, epsilon, epsilon_sqr
