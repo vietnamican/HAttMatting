@@ -74,7 +74,7 @@ def train(train_loader, model, optimizer, epoch, logger):
             logger.info(status)
     writer.add_scalar('Train_Loss', losses.avg, epoch)
     writer.add_scalar('Learning_Rate', get_learning_rate(optimizer), epoch)
-    save_checkpoint(epoch, 0, model, optimizer, losses.avg, False)
+    save_checkpoint(epoch, 0, model, optimizer, losses.avg, False, args.checkpoint_dir)
     return losses.avg
 
 
