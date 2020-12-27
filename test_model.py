@@ -12,7 +12,7 @@ import torch.optim as optim
 from model import Model
 
 if __name__ == '__main__':
-    model = Model()
+    model = Model('train_alpha')
     summary(model, (3, 320, 320))
     # inp = torch.zeros((2, 3, 320, 320))
     # out1, out2 = model(inp)
