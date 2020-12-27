@@ -166,7 +166,7 @@ class Model(nn.Module):
 
             #print(pred_mattes.mean(), pred_alpha.mean(), pred_refine.sum())
             return raw_trimap, pred_alpha
-        return raw_trimap
+        return raw_trimap, None
 
 if __name__ == "__main__":
     model = EncodeNetwork()

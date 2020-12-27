@@ -91,16 +91,18 @@ class LossFunction(object):
         self.stage = stage
         self.trimap_criterion = SegmentationLosses(
             batch_average=True).build_loss('ce')
-        if stage == 'train_trimap':
-            self.__call__ = self.trimap_loss
-        elif stage == 'train_alpha':
-            self.__call__ = self.alpha_prediction_loss_with_trimap
+
+    def __call__(self):
+        if self.stage == 'train_trimap':
+            return self.trimap_loss
+        elif self.stage == 'train_alpha':
+            return self.fusion_loss
 
     def trimap_loss(self, trimap_pred, trimap_true):
         mask = torch.zeros(trimap_true.shape, device=device)
         # mask[trimap_true == 0] = 0
         mask[trimap_true == 128] = 1
-        mask[trimap_true == 255] = 2 
+        mask[trimap_true == 255] = 2
         return self.trimap_criterion(trimap_pred, mask)
 
     def alpha_prediction_loss_with_trimap(self, y_pred, y_true, trimap):

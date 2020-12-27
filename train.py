@@ -11,12 +11,11 @@ import numpy as np
 from tensorboardX import SummaryWriter
 from torch.cuda.amp import autocast, GradScaler
 
-from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, get_learning_rate, \
-    alpha_prediction_loss, alpha_prediction_loss_with_trimap, ssim_loss, trimap_prediction_loss
+from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, get_learning_rate
 from config import device, im_size, grad_clip, print_freq
-
 from model import Model
 from data_tfrecord_2 import HADataset
+from loss import LossFunction
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('Using device {}'.format(device))
@@ -28,7 +27,7 @@ def train(train_loader, model, optimizer, epoch, logger):
     losses = AverageMeter()
     scaler = GradScaler()
     # loss_function = alpha_prediction_loss
-    loss_function = alpha_prediction_loss_with_trimap
+    criterion = LossFunction(args.stage)()
 
     # Batches
     for i, (img, alpha_label, trimap_label) in enumerate(train_loader):
@@ -45,11 +44,10 @@ def train(train_loader, model, optimizer, epoch, logger):
             # alpha_out = alpha_out.reshape((-1, 1, im_size * im_size))  # [N, 320*320]
 
             # Calculate loss
-            # loss = criterion(alpha_out, alpha_label)
-            alpha_loss = alpha_prediction_loss_with_trimap(
-                alpha_out, alpha_label, trimap_label)
-            trimap_loss = trimap_prediction_loss(trimap_out, trimap_label)
-            loss = 0.5*alpha_loss + 0.5*trimap_loss
+            if args.stage == 'train_trimap':
+                loss = criterion(trimap_out, trimap_label)
+            elif args.stage == 'train_alpha':
+                loss = criterion(alpha_out, alpha_label, trimap_out, trimap_label)
 
         # Back prop.
         optimizer.zero_grad()
