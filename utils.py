@@ -172,7 +172,6 @@ class SegmentationLosses(object):
         self.weight = weight
         self.size_average = size_average
         self.batch_average = batch_average
-        self.cuda = cuda
 
     def build_loss(self, mode='ce'):
         """Choices: ['ce' or 'focal']"""
