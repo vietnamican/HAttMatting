@@ -70,9 +70,9 @@ def get_raw(type_of_dataset, count):
         temp = a_dataset[count]['image']
         channels = 1
     temp = tf.image.decode_jpeg(temp, channels=channels)
-    temp = transforms.ToTensor()(np.asarray(temp))
+    # temp = transforms.ToTensor()(np.asarray(temp))
     # temp = torch.Tensor(temp, device=device, dtype=torch.float16)
-    # temp = np.asarray(temp)
+    temp = np.asarray(temp)
     return temp
 
 
@@ -127,8 +127,8 @@ def composite4(fg, bg, a, w, h):
 def process(fcount, bcount):
     im = get_raw("fg", fcount)
     a = get_raw("a", fcount)
-    a = a.view(a.shape[0], a.shape[1])
-    # a = np.reshape(a, (a.shape[0], a.shape[1]))
+    # a = a.view(a.shape[0], a.shape[1])
+    a = np.reshape(a, (a.shape[0], a.shape[1]))
     h, w = im.shape[:2]
     bg = get_raw("bg", bcount)
     bh, bw = bg.shape[:2]
