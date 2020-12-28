@@ -12,6 +12,7 @@ class Model(nn.Module):
     def __init__(self, stage):
         super(Model, self).__init__()
         self.stage = stage
+
         #####################
         ####### Encode ######
         #####################
@@ -28,12 +29,7 @@ class Model(nn.Module):
         self.conv5_1 = ConvBatchnormRelu(512, 512, kernel_size=3, padding=1,bias=True)
         self.conv5_2 = ConvBatchnormRelu(512, 512, kernel_size=3, padding=1,bias=True)
         self.conv5_3 = ConvBatchnormRelu(512, 512, kernel_size=3, padding=1,bias=True)
-
-        # model released before 2019.09.09 should use kernel_size=1 & padding=0
-        # self.conv6_1 = nn.Conv2d(512, 512, kernel_size=1, padding=0,bias=True)
         self.conv6_1 = ConvBatchnormRelu(512, 512, kernel_size=3, padding=1,bias=True)
-        # self.conv5_1 = nn.Conv2d(512, 512, kernel_size=3, padding=1,bias=True)
-        # self.deconv5_1 = nn.Conv2d(512, 512, kernel_size=1, padding=1,bias=True)
         
         #####################
         ####### Trimap ######
@@ -57,12 +53,9 @@ class Model(nn.Module):
         self.deconv1_1 = ConvBatchnormRelu(128, 64, kernel_size=5, padding=2,bias=True)
         self.deconv1 = ConvBatchnormRelu(128, 1, kernel_size=5, padding=2,bias=True)
 
-        # if args.stage == 2:
-        #     # for stage2 training
-        #     for p in self.parameters():
-        #         p.requires_grad=False
-        
-        # if self.stage == 2 or self.stage == 3:
+        #####################
+        ####### Refine ######
+        #####################
         self.refine_conv1 = ConvBatchnormRelu(7, 64, kernel_size=3, padding=1, bias=True)
         self.refine_conv2 = ConvBatchnormRelu(64, 64, kernel_size=3, padding=1, bias=True)
         self.refine_conv3 = ConvBatchnormRelu(64, 64, kernel_size=3, padding=1, bias=True)
@@ -187,9 +180,6 @@ class Model(nn.Module):
         for name, p in self.named_parameters():
             if p.data.shape == model_state_dict[name].shape: 
                 p.data = model_state_dict[name]
-                # print('true {} vs {}, {}'.format(p.data.shape, model_state_dict[name].shape, name))
-            # else:
-                # print('false {} vs {}, {}'.format(p.data.shape, model_state_dict[name].shape, name))
               
 if __name__ == "__main__":
     model = EncodeNetwork()
