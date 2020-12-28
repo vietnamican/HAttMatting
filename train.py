@@ -94,7 +94,7 @@ if __name__ == '__main__':
         torch.cuda.manual_seed(7)
         np.random.seed(7)
         model = Model(args.stage)
-        optimizer = torch.optim.Adam(model.parameters())
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     else:
         checkpoint = torch.load(checkpoint)
         model_state_dict = checkpoint['model_state_dict']
