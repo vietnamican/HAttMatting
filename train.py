@@ -163,7 +163,7 @@ if __name__ == '__main__':
     summary(model, (3, 320, 320), depth=6)
     train_loader = DataLoader(
         HADataset('train'), batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=8)
-    val_loader  = DataLoader(HADataset('val'), batch_size=1, shuffle=False, num_workers=2)
+    val_loader  = DataLoader(HADataset('valid'), batch_size=1, shuffle=False, num_workers=2)
     total_training_time = 0
     n_epochs = args.end_epoch
     logger = get_logger()
