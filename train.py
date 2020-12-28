@@ -55,6 +55,7 @@ def train(train_loader, model, optimizer, epoch, logger):
         # loss.backward()
 
         # Clip gradients
+        scaler.unscale_(optimizer)
         clip_gradient(optimizer, grad_clip)
 
         # Update weights
@@ -176,9 +177,3 @@ if __name__ == '__main__':
             val_loss = val(val_loader, model, optimizer, epoch, logger)
         scheduler.step(val_loss)
         total_training_time += end - start
-        # test(test_loader, model)
-    # print('Total traning process takes {} seconds'.format(total_training_time))
-
-# if __name__ == '__main__':
-#     model = Model()
-#     summary(model, (3, 320, 320), depth=4)
