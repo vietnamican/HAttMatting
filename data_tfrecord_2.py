@@ -143,7 +143,10 @@ def process(fcount, bcount):
 
 
 def gen_trimap(alpha):
-    k_size = random.choice(range(1, 12))
+    if args.stage == 'train_alpha':
+        k_size = 5
+    else :
+        k_size = random.choice(range(1, 12))
     iterations = np.random.randint(1, 20)
     kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (k_size, k_size))
     dilated = cv.dilate(alpha, kernel, iterations)
