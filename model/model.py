@@ -68,8 +68,9 @@ class Model(nn.Module):
         self.refine_conv3 = ConvBatchnormRelu(64, 64, kernel_size=3, padding=1, bias=True)
         self.refine_pred = ConvBatchnormRelu(64, 1, kernel_size=3, padding=1, bias=True)
         
-        # if stage == 'train_alpha':
-        #     self.freeze_trimap_path()
+        if stage == 'train_alpha':
+            self.freeze_trimap_path()
+        
     def forward(self, x):
         # Stage 1
         # x11 = self.conv1_1(x)
