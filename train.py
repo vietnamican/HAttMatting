@@ -170,7 +170,7 @@ if __name__ == '__main__':
     for epoch in range(start_epoch, n_epochs + 1):
         start = time()
         train_loss = train(train_loader, model, optimizer, epoch, logger)
-        save_checkpoint(epoch, epochs_since_improvement, model, optimizer, losses.avg, False, args.checkpoint_dir)
+        save_checkpoint(epoch, model, optimizer, losses.avg, False, args.checkpoint_dir)
         end = time()
         print('\nTraning process takes {} seconds'.format(end - start))
         if (epoch - start_epoch) % 2 == 1:
