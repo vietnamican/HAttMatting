@@ -21,6 +21,7 @@ args = parse_args()
 # Just normalization for validation
 data_transforms = {
     'train': transforms.Compose([
+        transforms.ToPILImage(),
         transforms.ColorJitter(
             brightness=0.125, contrast=0.125, saturation=0.125),
         transforms.ToTensor(),
@@ -43,20 +44,11 @@ def return_raw_image(dataset):
     return dataset_raw
 
 
-fg_dataset = tfrecord_creator.read("fg", "./data/tfrecord/")
 bg_dataset = tfrecord_creator.read("bg", "./data/tfrecord/")
-a_dataset = tfrecord_creator.read("a",  "./data/tfrecord/")
-fg_dataset = list(fg_dataset)
 bg_dataset = list(bg_dataset)
-a_dataset = list(a_dataset)
 print("___________________")
-print(len(fg_dataset))
 print(len(bg_dataset))
-print(len(a_dataset))
 print("___________________")
-# fg_raw = return_raw_image(fg_dataset)
-# bg_raw = return_raw_image(bg_dataset)
-# a_raw  = return_raw_image(a_dataset)
 
 
 def get_raw(type_of_dataset, count):
@@ -70,8 +62,6 @@ def get_raw(type_of_dataset, count):
         temp = a_dataset[count]['image']
         channels = 1
     temp = tf.image.decode_jpeg(temp, channels=channels)
-    # temp = transforms.ToTensor()(np.asarray(temp))
-    # temp = torch.Tensor(temp, device=device, dtype=torch.float16)
     temp = np.asarray(temp).astype(np.float32)
     return temp
 
@@ -85,22 +75,6 @@ with open('Combined_Dataset/Test_set/test_fg_names.txt') as f:
     fg_test_files = f.read().splitlines()
 with open('Combined_Dataset/Test_set/test_bg_names.txt') as f:
     bg_test_files = f.read().splitlines()
-
-
-def get_alpha(name):
-    fg_i = int(name.split("_")[0])
-    name = fg_files[fg_i]
-    filename = os.path.join('data/mask', name)
-    alpha = cv.imread(filename, 0)
-    return alpha
-
-
-def get_alpha_test(name):
-    fg_i = int(name.split("_")[0])
-    name = fg_test_files[fg_i]
-    filename = os.path.join('data/mask_test', name)
-    alpha = cv.imread(filename, 0)
-    return alpha
 
 
 def composite4(fg, bg, a, w, h):
@@ -158,9 +132,6 @@ def gen_trimap(alpha):
     return trimap
 
 
-# Randomly crop (image, trimap) pairs centered on pixels in the unknown regions.
-
-
 class HADataset(Dataset):
     def __init__(self, split):
         super(HADataset, self).__init__()
@@ -170,35 +141,19 @@ class HADataset(Dataset):
         with open("img.txt") as file:
             self.imgs = file.read().splitlines()
         with open("alpha.txt") as file:
-            self.alpha = file.read.splitlines()
+            self.alpha = file.read().splitlines()
 
         self.num_bgs = 43100
-
-        # fgs = np.repeat(np.arange(num_fgs), args.batch_size * 8)
-        # np.random.shuffle(fgs)
-        # split_index = int(fgs.shape[0] * (1 - valid_ratio))
-        # self.fgs = fgs
-        # if split == 'train':
-        #     self.fgs = fgs[:split_index]
-        # else:
-        #     self.fgs = fgs[split_index:]
-        # self.fg_num = np.unique(self.fgs).shape[0]
-
-        # print(self.fg_num)
 
         self.transformer = data_transforms[split]
 
     def __getitem__(self, i):
         img_path = self.imgs[i]
         alpha_path = self.alpha[i]
-        # fcount = self.fgs[i]
         bcount = np.random.randint(self.num_bgs)
         # size 800x600
 
         img, alpha, _, _ = process(img_path, alpha_path, bcount)
-
-        # crop size 320:640:480 = 1:1:1
-        # crop_size = random.choice(different_sizes)
         trimap = gen_trimap(alpha)
 
         # Flip array left to right randomly (prob=1:1)
@@ -207,19 +162,10 @@ class HADataset(Dataset):
             trimap = np.fliplr(trimap).copy()
             alpha = np.fliplr(alpha)
 
-        img = transforms.ToPILImage()(img)
-        img = self.transformer(img)
-        x = img
-
-        # y = np.empty((2, im_size, im_size), dtype=np.float32)
-        y = alpha / 255.
-        # mask = np.equal(trimap, 128).astype(np.float32)
-        # y[1, :, :] = mask
-
-        return x, y, trimap
+        return self.transformer(img), alpha / 255.0, trimap
 
     def __len__(self):
-        return len(self.names)
+        return len(self.imgs)
 
 
 def gen_names():
