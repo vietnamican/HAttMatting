@@ -144,3 +144,5 @@ images/
 *.pth
 alpha.txt
 img.txt
+clip_img/
+matting/

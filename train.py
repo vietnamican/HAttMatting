@@ -14,7 +14,7 @@ from torch.cuda.amp import autocast, GradScaler
 from utils import parse_args, save_checkpoint, AverageMeter, clip_gradient, get_logger, get_learning_rate
 from config import device, im_size, grad_clip, print_freq
 from model import Model
-from data_tfrecord_2 import HADataset
+from data_human import HADataset
 from loss import LossFunction
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

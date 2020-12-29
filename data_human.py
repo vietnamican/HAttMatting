@@ -1,6 +1,7 @@
 import math
 import os
 import random
+from tqdm import tqdm
 
 import cv2 as cv
 import numpy as np
@@ -143,6 +144,14 @@ class HADataset(Dataset):
         with open("alpha.txt") as file:
             self.alpha = file.read().splitlines()
 
+        split_index = 9 * len(self.imgs) // 10
+        if split == 'train':
+            self.imgs = self.imgs[:split_index]
+            self.alpha = self.alpha[:split_index]
+        else:
+            self.imgs = self.imgs[split_index:]
+            self.alpha = self.alpha[split_index:]
+
         self.num_bgs = 43100
 
         self.transformer = data_transforms[split]
@@ -191,4 +200,7 @@ def gen_names():
 
 
 if __name__ == "__main__":
-    gen_names()
+    dataset = HADataset(split='train')
+    dataloader = torch.utils.data.dataloader.DataLoader(dataset, batch_size=8, shuffle=True, num_workers=16)
+    for i, (image, alpha, trimap) in enumerate(tqdm(dataloader)):
+        print(image.size(), alpha.size(), trimap.size())
