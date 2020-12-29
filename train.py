@@ -75,7 +75,7 @@ def train(train_loader, model, optimizer, epoch, logger):
             logger.info(status)
     writer.add_scalar('Train_Loss', losses.avg, epoch)
     writer.add_scalar('Learning_Rate', get_learning_rate(optimizer), epoch)
-    save_checkpoint(epoch, 0, model, optimizer, losses.avg, False, args.checkpoint_dir)
+    # save_checkpoint(epoch, 0, model, optimizer, losses.avg, False, args.checkpoint_dir)
     return losses.avg
 
 def val(val_loader, model, optimizer, epoch, logger):
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     for epoch in range(start_epoch, n_epochs + 1):
         start = time()
         train_loss = train(train_loader, model, optimizer, epoch, logger)
-        save_checkpoint(epoch, model, optimizer, losses.avg, False, args.checkpoint_dir)
+        save_checkpoint(epoch, 0, model, optimizer, train_loss, False, args.checkpoint_dir)
         end = time()
         print('\nTraning process takes {} seconds'.format(end - start))
         if (epoch - start_epoch) % 2 == 1:
