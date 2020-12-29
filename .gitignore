@@ -142,3 +142,5 @@ log*/
 True/
 images/
 *.pth
+alpha.txt
+img.txt

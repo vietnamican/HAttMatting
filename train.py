@@ -175,5 +175,5 @@ if __name__ == '__main__':
         print('\nTraning process takes {} seconds'.format(end - start))
         if (epoch - start_epoch) % 2 == 1:
             val_loss = val(val_loader, model, optimizer, epoch, logger)
-        scheduler.step(val_loss)
+            scheduler.step(val_loss)
         total_training_time += end - start
