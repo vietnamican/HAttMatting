@@ -1,5 +1,6 @@
 from tqdm import tqdm
 from time import time
+import random
 
 import torch
 import torchvision
@@ -124,9 +125,10 @@ if __name__ == '__main__':
         torch.backends.cudnn.enabled = True
         torch.backends.cudnn.benchmark = True
     if checkpoint is None:
-        torch.random.manual_seed(7)
-        torch.cuda.manual_seed(7)
-        np.random.seed(7)
+        torch.random.manual_seed(42)
+        torch.cuda.manual_seed(42)
+        np.random.seed(42)
+        random.seed(42)
         model = Model(args.stage)
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=2, factor=0.6)
@@ -151,15 +153,18 @@ if __name__ == '__main__':
         if 'torch_seed' in checkpoint and checkpoint['torch_seed'] is not None:
             torch.random.set_rng_state(checkpoint['torch_seed'])
         else:
-            torch.random.manual_seed(7)
+            torch.random.manual_seed(42)
         if 'torch_cuda_seed' in checkpoint and checkpoint['torch_cuda_seed'] is not None:
             torch.cuda.set_rng_state(checkpoint['torch_cuda_seed'])
         else:
-            torch.cuda.manual_seed(7)
+            torch.cuda.manual_seed(42)
         if 'np_seed' in checkpoint and checkpoint['np_seed'] is not None:
             np.random.set_state(checkpoint['np_seed'])
         else:
-            np.random.seed(7)
+            np.random.seed(42)
+        if 'seed' in checkpoint and checkpoint['seed'] is not None:
+            random.set_state(checkpoint['seed'])
+        else random.set_state(42)
     summary(model, (3, 320, 320), depth=6)
     train_loader = DataLoader(
         HADataset('train'), batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=8)

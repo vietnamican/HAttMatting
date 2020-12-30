@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import random
 
 import cv2 as cv
 import numpy as np
@@ -39,7 +40,8 @@ def save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss, is_
              'optimizer_state_dict': optimizer.state_dict(),
              'torch_seed': torch.get_rng_state(),
              'torch_cuda_seed': torch.cuda.get_rng_state(),
-             'np_seed': np.random.get_state()
+             'np_seed': np.random.get_state(),
+             'seed': random.get_state(),
              }
     # filename = 'checkpoint_' + str(epoch) + '_' + str(loss) + '.tar'
     filename = 'checkpoint_{}_{}.tar'.format(epoch, loss)
@@ -137,6 +139,7 @@ def get_logger():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
+    logger.propagate = False
     return logger
 
 
