@@ -163,8 +163,9 @@ if __name__ == '__main__':
         else:
             np.random.seed(42)
         if 'seed' in checkpoint and checkpoint['seed'] is not None:
-            random.set_state(checkpoint['seed'])
-        else random.set_state(42)
+            random.setstate(checkpoint['seed'])
+        else:
+            random.setstate(42)
     summary(model, (3, 320, 320), depth=6)
     train_loader = DataLoader(
         HADataset('train'), batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=8)
