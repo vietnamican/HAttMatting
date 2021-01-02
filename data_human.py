@@ -29,6 +29,7 @@ data_transforms = {
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     ]),
     'valid': transforms.Compose([
+        transforms.ToPILImage(),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
@@ -99,11 +100,12 @@ def composite4(fg, bg, a, w, h):
 
 
 def process(img_path, alpha_path, bcount):
+    img_root_path = args.img_root_path
+    img_path = os.path.join(img_root_path, img_path)
+    alpha_path = os.path.join(img_root_path, alpha_path)
     im = cv.imread(img_path, cv.IMREAD_UNCHANGED)
     a = cv.imread(alpha_path, cv.IMREAD_UNCHANGED)
     a = a[:, :, 3]
-    # a = a.view(a.shape[0], a.shape[1])
-    a = np.reshape(a, (a.shape[0], a.shape[1]))
     h, w = im.shape[:2]
     bg = get_raw("bg", bcount)
     bh, bw = bg.shape[:2]
@@ -139,10 +141,10 @@ class HADataset(Dataset):
         self.split = split
 
         filename = '{}_names.txt'.format(split)
-        with open("img.txt") as file:
-            self.imgs = file.read().splitlines()
-        with open("alpha.txt") as file:
-            self.alpha = file.read().splitlines()
+        with open("img.txt", 'r') as f:
+            self.imgs = f.read().splitlines()
+        with open("alpha.txt", 'r') as f:
+            self.alpha = f.read().splitlines()
 
         split_index = 9 * len(self.imgs) // 10
         if split == 'train':
@@ -171,7 +173,7 @@ class HADataset(Dataset):
             trimap = np.fliplr(trimap).copy()
             alpha = np.fliplr(alpha)
 
-        return self.transformer(img), alpha / 255.0, trimap
+        return self.transformer(img), alpha / 255.0, trimap, img_path
 
     def __len__(self):
         return len(self.imgs)

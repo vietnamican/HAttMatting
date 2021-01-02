@@ -31,7 +31,7 @@ def train(train_loader, model, optimizer, epoch, logger):
     criterion = LossFunction(args.stage)()
 
     # Batches
-    for i, (img, alpha_label, trimap_label) in enumerate(train_loader):
+    for i, (img, alpha_label, trimap_label, _) in enumerate(train_loader):
         # Move to GPU, if available
         img = img.type(torch.FloatTensor).to(device)  # [N, 4, 320, 320]
         alpha_label = alpha_label.type(
@@ -86,7 +86,7 @@ def val(val_loader, model, optimizer, epoch, logger):
     criterion = LossFunction(args.stage)()
     
     # Batches
-    for i, (img, alpha_label, trimap_label) in enumerate(val_loader):
+    for i, (img, alpha_label, trimap_label, _) in enumerate(val_loader):
         # Move to GPU, if available
         img = img.type(torch.FloatTensor).to(device)  # [N, 4, 320, 320]
         alpha_label = alpha_label.type(

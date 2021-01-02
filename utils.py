@@ -41,7 +41,7 @@ def save_checkpoint(epoch, epochs_since_improvement, model, optimizer, loss, is_
              'torch_seed': torch.get_rng_state(),
              'torch_cuda_seed': torch.cuda.get_rng_state(),
              'np_seed': np.random.get_state(),
-             'seed': random.get_state(),
+             'seed': random.getstate(),
              }
     # filename = 'checkpoint_' + str(epoch) + '_' + str(loss) + '.tar'
     filename = 'checkpoint_{}_{}.tar'.format(epoch, loss)
@@ -128,6 +128,8 @@ def parse_args():
                         default='train_trimap', help='stage of training model')
     parser.add_argument('--checkpoint-dir', type=str,
                         default='checkpoint_train_trimap', help='directory to save checkpoint')
+    parser.add_argument('--img-root-path', type=str,
+                        default='../data', help='root path of image dataset')
     args = parser.parse_args()
     return args
 
