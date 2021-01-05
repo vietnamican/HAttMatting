@@ -46,7 +46,9 @@ def return_raw_image(dataset):
     return dataset_raw
 
 
-bg_dataset = tfrecord_creator.read("bg", "./data/tfrecord/")
+# bg_dataset = tfrecord_creator.read("bg", "./data/tfrecord/")
+# bg_dataset = tfrecord_creator.read("bg", "../data/bg/")
+bg_dataset = tfrecord_creator.read("bg", "/content/bg/")
 bg_dataset = list(bg_dataset)
 print("___________________")
 print(len(bg_dataset))
@@ -155,7 +157,7 @@ class HADataset(Dataset):
             self.imgs = self.imgs[split_index:]
             self.alpha = self.alpha[split_index:]
 
-        self.num_bgs = 43100
+        self.num_bgs = len(bg_dataset)
 
         self.transformer = data_transforms[split]
 

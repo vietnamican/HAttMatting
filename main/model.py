@@ -3,7 +3,7 @@ import cv2
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.utils.data.dataloader.DataLoader as DataLoader
+from torch.utils.data import DataLoader
 import torchvision
 
 import pytorch_lightning as pl

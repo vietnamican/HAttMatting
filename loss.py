@@ -113,4 +113,5 @@ class LossFunction(object):
         return torch.sum(alpha_loss) / (weighted.sum() + 1.)
 
     def fusion_loss(self, y_pred, y_true, trimap_pred, trimap_true):
-        return self.alpha_prediction_loss_with_trimap(y_pred, y_true, trimap_true) + 0.01*self.trimap_loss(trimap_pred, trimap_true)
+        return self.alpha_prediction_loss_with_trimap(y_pred, y_true, trimap_true)
+        #  + 0.01*self.trimap_loss(trimap_pred, trimap_true)
