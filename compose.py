@@ -54,6 +54,8 @@ def validation_step(self, batch, batch_idx):
 
     return loss
 
+def validation_epoch_end(self, outputs):
+    
 
 def build_loss(self):
     criterion = LossFunction(self.stage)()
