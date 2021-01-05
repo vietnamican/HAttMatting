@@ -54,8 +54,6 @@ def validation_step(self, batch, batch_idx):
 
     return loss
 
-def validation_epoch_end(self, outputs):
-    
 
 def build_loss(self):
     criterion = LossFunction(self.stage)()
@@ -65,8 +63,10 @@ def build_loss(self):
 def configure_optimizers(self):
     optimizer = torch.optim.SGD(self.parameters(
     ), lr=self.lr, weight_decay=self.weight_decay, momentum=self.momentum, nesterov=True)
+    # scheduler = torch.optim.lr_scheduler.MultiplicativeLR(
+    #     optimizer, lr_lambda=lambda epoch: 0.95 ** epoch)
     scheduler = torch.optim.lr_scheduler.MultiplicativeLR(
-        optimizer, lr_lambda=lambda epoch: 0.95 ** epoch)
+        optimizer, lr_lambda=lambda epoch: 0.95)
     return {'optimizer': optimizer, 'lr_scheduler': scheduler}
 
 
