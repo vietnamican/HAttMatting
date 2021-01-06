@@ -121,20 +121,10 @@ def process(img_path, alpha_path, bcount):
     return composite4(im, bg, a, w, h)
 
 
-def gen_trimap(alpha):
-    if args.stage == 'train_alpha':
-        k_size = 5
-        iterations = 10
-    else:
-        k_size = random.choice(range(1, 12))
-        iterations = np.random.randint(1, 20)
-    kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (k_size, k_size))
-    dilated = cv.dilate(alpha, kernel, iterations)
-    eroded = cv.erode(alpha, kernel, iterations)
-    trimap = np.zeros(alpha.shape)
-    trimap.fill(128)
-    trimap[eroded >= 255] = 255
-    trimap[dilated <= 0] = 0
+def gen_trimap(trimap_path):
+    img_root_path = args.img_root_path
+    trimap_path = os.path.join(img_root_path, trimap_path)
+    trimap = cv.imread(trimap_path, cv.IMREAD_UNCHANGED)
     return trimap
 
 
@@ -148,14 +138,18 @@ class HADataset(Dataset):
             self.imgs = f.read().splitlines()
         with open("alpha.txt", 'r') as f:
             self.alpha = f.read().splitlines()
+        with open("trimap.txt", 'r') as f:
+            self.trimap = f.read().splitlines()
 
         split_index = 9 * len(self.imgs) // 10
         if split == 'train':
             self.imgs = self.imgs[:split_index]
             self.alpha = self.alpha[:split_index]
+            self.trimap = self.trimap[:split_index]
         else:
             self.imgs = self.imgs[split_index:]
             self.alpha = self.alpha[split_index:]
+            self.trimap = self.trimap[split_index:]
 
         self.num_bgs = len(bg_dataset)
 
@@ -164,11 +158,12 @@ class HADataset(Dataset):
     def __getitem__(self, i):
         img_path = self.imgs[i]
         alpha_path = self.alpha[i]
+        trimap_path = self.trimap[i]
         bcount = np.random.randint(self.num_bgs)
         # size 800x600
 
         img, alpha, _, _ = process(img_path, alpha_path, bcount)
-        trimap = gen_trimap(alpha)
+        trimap = gen_trimap(trimap_path)
 
         # Flip array left to right randomly (prob=1:1)
         if np.random.random_sample() > 0.5:
