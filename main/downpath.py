@@ -8,6 +8,7 @@ import torchvision
 import pytorch_lightning as pl
 
 from .conv_batchnorm_relu import ConvBatchNormRelu
+from .cbam import CbamBlock
 
 
 class DownPath(pl.LightningModule):
@@ -17,17 +18,24 @@ class DownPath(pl.LightningModule):
         outplanes = int(args[1])
         if length is None:
             length = 2
+        if 'attention' not in kwargs:
+            attention = True
+        else:
+            attention = kwargs['attention']
+            kwargs.pop('attention', None)
         if length == 2:
             self.conv_path = nn.Sequential(
                 ConvBatchNormRelu(inplanes, outplanes, *args[2:], **kwargs),
                 ConvBatchNormRelu(outplanes, outplanes, *args[2:], **kwargs)
-            )
+            )        
         elif length == 3:
             self.conv_path = nn.Sequential(
                 ConvBatchNormRelu(inplanes, outplanes, *args[2:], **kwargs),
                 ConvBatchNormRelu(outplanes, outplanes, *args[2:], **kwargs),
                 ConvBatchNormRelu(outplanes, outplanes, *args[2:], **kwargs)
             )
+        if attention:
+            self.conv_path.add_module('attention', CbamBlock(outplanes))
         self.pool_path = nn.MaxPool2d(kernel_size=(
             2, 2), stride=(2, 2), return_indices=True)
 
