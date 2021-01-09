@@ -114,8 +114,6 @@ class Model(pl.LightningModule):
             print(name)
             if name.startswith('down') or name.startswith('trimap'):
                 p.requires_grad = False
-    def train_dataloader(self):
-        return 
 if __name__ == "__main__":
 
     model = Model()

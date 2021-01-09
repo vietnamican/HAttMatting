@@ -19,7 +19,7 @@ class DownPath(pl.LightningModule):
         if length is None:
             length = 2
         if 'attention' not in kwargs:
-            attention = True
+            attention = False
         else:
             attention = kwargs['attention']
             kwargs.pop('attention', None)
