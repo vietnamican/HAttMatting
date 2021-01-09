@@ -70,17 +70,6 @@ def get_raw(type_of_dataset, count):
     return temp
 
 
-kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (3, 3))
-with open('Combined_Dataset/Training_set/training_fg_names.txt') as f:
-    fg_files = f.read().splitlines()
-with open('Combined_Dataset/Training_set/training_bg_names.txt') as f:
-    bg_files = f.read().splitlines()
-with open('Combined_Dataset/Test_set/test_fg_names.txt') as f:
-    fg_test_files = f.read().splitlines()
-with open('Combined_Dataset/Test_set/test_bg_names.txt') as f:
-    bg_test_files = f.read().splitlines()
-
-
 def composite4(fg, bg, a, w, h):
     bg_h, bg_w = bg.shape[:2]
     x = 0
@@ -133,12 +122,11 @@ class HADataset(Dataset):
         super(HADataset, self).__init__()
         self.split = split
 
-        filename = '{}_names.txt'.format(split)
-        with open("img.txt", 'r') as f:
+        with open("img_portrait.txt", 'r') as f:
             self.imgs = f.read().splitlines()
-        with open("alpha.txt", 'r') as f:
+        with open("alpha_portrait.txt", 'r') as f:
             self.alpha = f.read().splitlines()
-        with open("trimap.txt", 'r') as f:
+        with open("trimap_portrait.txt", 'r') as f:
             self.trimap = f.read().splitlines()
 
         split_index = 9 * len(self.imgs) // 10
@@ -201,6 +189,7 @@ def gen_names():
 
 if __name__ == "__main__":
     dataset = HADataset(split='train')
-    dataloader = torch.utils.data.dataloader.DataLoader(dataset, batch_size=8, shuffle=True, num_workers=16)
+    dataloader = torch.utils.data.dataloader.DataLoader(
+        dataset, batch_size=8, shuffle=True, num_workers=16)
     for i, (image, alpha, trimap) in enumerate(tqdm(dataloader)):
         print(image.size(), alpha.size(), trimap.size())
