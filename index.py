@@ -13,6 +13,10 @@ from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from main import Model
 from torchsummary import summary
 from compose import compose
+from utils import parse_args
+
+global args
+args = parse_args()
 
 
 if __name__ == "__main__":
@@ -26,7 +30,7 @@ if __name__ == "__main__":
     )
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
-    model = compose()
+    model = compose(args.stage)
     trainer = pl.Trainer(precision=16, gpus=1,
                          benchmark=True, accumulate_grad_batches=4,
                          progress_bar_refresh_rate=200,

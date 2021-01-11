@@ -96,7 +96,7 @@ def process(img_path, alpha_path, bcount):
     alpha_path = os.path.join(img_root_path, alpha_path)
     im = cv.imread(img_path, cv.IMREAD_UNCHANGED)
     a = cv.imread(alpha_path, cv.IMREAD_UNCHANGED)
-    a = a[:, :, 3]
+    # a = a[:, :, 3]
     h, w = im.shape[:2]
     bg = get_raw("bg", bcount)
     bh, bw = bg.shape[:2]
