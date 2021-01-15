@@ -129,7 +129,7 @@ class HADataset(Dataset):
         with open("trimap_portrait.txt", 'r') as f:
             self.trimap = f.read().splitlines()
 
-        split_index = 9 * len(self.imgs) // 10
+        split_index = 1700  
         if split == 'train':
             self.imgs = self.imgs[:split_index]
             self.alpha = self.alpha[:split_index]

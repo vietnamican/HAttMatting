@@ -66,7 +66,7 @@ def configure_optimizers(self):
     # scheduler = torch.optim.lr_scheduler.MultiplicativeLR(
     #     optimizer, lr_lambda=lambda epoch: 0.95 ** epoch)
     scheduler = torch.optim.lr_scheduler.MultiplicativeLR(
-        optimizer, lr_lambda=lambda epoch: 0.95)
+        optimizer, lr_lambda=lambda epoch: 0.95 if epoch % 20 == 0 and epoch > 0 else 1)
     return {'optimizer': optimizer, 'lr_scheduler': scheduler}
 
 
