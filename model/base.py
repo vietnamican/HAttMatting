@@ -13,6 +13,7 @@ class BaseException(Exception):
         message = '{} type must be one of {}'.format(parameter, types)
         super().__init__(message)
 
+
 class Base(pl.LightningModule):
     def __init__(self):
         super(Base, self).__init__()
@@ -57,3 +58,7 @@ class Base(pl.LightningModule):
     ):
         if not isinstance(prefix, str):
             raise BaseException('prefix', [str])
+
+
+class BaseSequential(nn.Sequential, Base):
+    pass

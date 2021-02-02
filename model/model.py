@@ -9,7 +9,7 @@ class Model(Base):
     def __init__(self):
         super(Model, self).__init__()
         self.feature_extraction = FeatureExtraction()
-        self.aspp = ASPP()
+        self.aspp = ASPP(1024, [12, 24, 36])
         self.hierarchical_attention = HierarchicalAttention()
         self.discriminator = Discriminator()
         self.upsample = lambda x: x
@@ -22,10 +22,10 @@ class Model(Base):
         low_level, high_level = self.feature_extraction(x)
         high_level = self.aspp(high_level)
 
-        alpha_matte_pred = self.hierarchical_attention(low_level, high_level)
+        # alpha_matte_pred = self.hierarchical_attention(low_level, high_level)
 
-        self.upsample(alpha_matte_pred)
+        # self.upsample(alpha_matte_pred)
 
-        out = self.discriminator(x, alpha_matte_true, alpha_matte_pred)
+        # out = self.discriminator(x, alpha_matte_true, alpha_matte_pred)
 
-        return out
+        return low_level, high_level
