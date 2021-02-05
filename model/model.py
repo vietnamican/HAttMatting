@@ -14,7 +14,6 @@ class Model(Base):
         self.aspp = ASPP(1024, [12, 24, 36])
         self.hierarchical_attention = HierarchicalAttention()
         self.discriminator = Discriminator()
-        self.upsample = lambda x: x
 
     def forward(
         self,
@@ -27,9 +26,8 @@ class Model(Base):
         high_level = nn.Upsample(low_level_size, mode='bilinear', align_corners=True)(high_level)
 
         alpha_matte_pred = self.hierarchical_attention(low_level, high_level)
+        input_size = x.shape[-2:]
+        alpha_matte_pred = nn.Upsample(input_size, mode='bilinear', align_corners=True)(alpha_matte_pred)
+        out = self.discriminator(alpha_matte_pred)
 
-        # self.upsample(alpha_matte_pred)
-
-        # out = self.discriminator(x, alpha_matte_true, alpha_matte_pred)
-
-        return low_level, high_level
+        return alpha_matte_pred

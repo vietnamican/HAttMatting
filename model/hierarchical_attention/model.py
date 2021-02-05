@@ -10,7 +10,8 @@ class Model(Base):
 
     def forward(
         self,
-        low_level,
-        high_level
+        low_level_feature,
+        high_level_feature
     ):
-        return self.pyramidal_features_distillation(high_level)
+        high_level_feature =  self.pyramidal_features_distillation(high_level_feature)
+        return self.appearance_cue_filtration(low_level_feature, high_level_feature)
