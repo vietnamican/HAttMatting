@@ -29,7 +29,7 @@ if __name__ == "__main__":
         save_top_k=-1,
         mode='min',
     )
-    lr_monitor = LearningRateMonitor(logging_interval='epoch')
+    # lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
     model = Model()
     # print(type(model.hattmatting.discriminator.parameters()))
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         gpus=0,
         benchmark=True, accumulate_grad_batches=4,
         progress_bar_refresh_rate=200,
-        callbacks=[checkpoint_callback, lr_monitor],
+        callbacks=[checkpoint_callback],
         fast_dev_run=True
         #  resume_from_checkpoint
     )

@@ -24,7 +24,6 @@ class Model(Base):
 
     def _gen_step(self, image, alpha):
         alpha_pred = self.hattmatting(image)
-        print(alpha_pred.type(), alpha.type(), image.type())
         recon_loss = self.recon_criterion(alpha_pred, alpha.float())
         dis_logit = self.dis_forward(image, alpha_pred)
         adversarial_loss = self.adversarial_criterion(
@@ -34,11 +33,8 @@ class Model(Base):
 
     def _dis_step(self, image, alpha):
         alpha_pred = self.hattmatting(image)
-        print('forward pred')
         fake_logit = self.dis_forward(image, alpha_pred)
-        print('forward true')
         real_logit = self.dis_forward(image, alpha)
-        print('pass forward true')
         fake_loss = self.adversarial_criterion(
             fake_logit, torch.zeros_like(fake_logit))
         real_loss = self.adversarial_criterion(
@@ -48,18 +44,14 @@ class Model(Base):
 
     def training_step(self, batch, batch_idx, optimizer_idx):
         image, alpha, _, _ = batch
-        image = image[..., 12:-12]
-        alpha = alpha[..., 12:-12]
         alpha = alpha.unsqueeze(1).float()
         if optimizer_idx == 0:
-            print("gen loss ssssssssssssssssssssssssssssssssss")
             recon_loss, adversarial_loss = self._gen_step(image, alpha)
             loss = self.lambda_recon_loss*recon_loss + \
                 self.lambda_adversarial_loss*adversarial_loss
             self.log('Generator Loss', loss)
             return loss
         else:
-            print("dis loss ssssssssssssssssssssssssssssssssss")
             adversarial_loss = self._dis_step(image, alpha)
             loss = self.lambda_adversarial_loss*adversarial_loss
             self.log('Discriminator Loss', loss)
@@ -67,8 +59,6 @@ class Model(Base):
 
     def validation_step(self, batch, batch_idx):
         image, alpha, _, _ = batch
-        image = image[..., 12:-12]
-        alpha = alpha[..., 12:-12]
         alpha = alpha.unsqueeze(1).float()
         recon_loss, adversarial_loss = self._gen_step(image, alpha)
         loss = self.lambda_recon_loss*recon_loss + \

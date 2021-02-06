@@ -48,7 +48,7 @@ def return_raw_image(dataset):
 
 bg_dataset = tfrecord_creator.read("bg", "./data/tfrecord/")
 # bg_dataset = tfrecord_creator.read("bg", "../data/bg/")
-# bg_dataset = tfrecord_creator.read("bg", "/content/bg/")
+# bg_dataset = tfrecord_creator.read("bg", "../bg/")
 bg_dataset = list(bg_dataset)
 print("___________________")
 print(len(bg_dataset))
@@ -95,26 +95,28 @@ def process(img_path, alpha_path, bcount):
     img_path = os.path.join(img_root_path, img_path)
     alpha_path = os.path.join(img_root_path, alpha_path)
     im = cv.imread(img_path, cv.IMREAD_UNCHANGED)
+    im = cv.cvtColor(im, cv.COLOR_BGR2RGB)
     a = cv.imread(alpha_path, cv.IMREAD_UNCHANGED)
     # a = a[:, :, 3]
     h, w = im.shape[:2]
-    bg = get_raw("bg", bcount)
-    bh, bw = bg.shape[:2]
-    wratio = w / bw
-    hratio = h / bh
-    ratio = wratio if wratio > hratio else hratio
-    if ratio > 1:
-        bg = cv.resize(src=bg, dsize=(math.ceil(bw * ratio),
-                                      math.ceil(bh * ratio)), interpolation=cv.INTER_CUBIC)
+    if np.random.random_sample() > 0.5:
+        bg = get_raw("bg", bcount)
+        bh, bw = bg.shape[:2]
+        wratio = w / bw
+        hratio = h / bh
+        ratio = wratio if wratio > hratio else hratio
+        if ratio > 1:
+            bg = cv.resize(src=bg, dsize=(math.ceil(bw * ratio),
+                                        math.ceil(bh * ratio)), interpolation=cv.INTER_CUBIC)
 
-    return composite4(im, bg, a, w, h)
-
+        return composite4(im, bg, a, w, h)
+    return im, a, im, None
 
 def gen_trimap(trimap_path):
     img_root_path = args.img_root_path
     trimap_path = os.path.join(img_root_path, trimap_path)
     trimap = cv.imread(trimap_path, cv.IMREAD_UNCHANGED)
-    return trimap
+    return trimap.astype(np.float32)
 
 
 class HADataset(Dataset):
@@ -134,6 +136,9 @@ class HADataset(Dataset):
             self.imgs = self.imgs[:split_index]
             self.alpha = self.alpha[:split_index]
             self.trimap = self.trimap[:split_index]
+            self.imgs = self.imgs * 16
+            self.alpha = self.alpha * 16
+            self.trimap = self.trimap * 16
         else:
             self.imgs = self.imgs[split_index:]
             self.alpha = self.alpha[split_index:]
@@ -151,14 +156,24 @@ class HADataset(Dataset):
         # size 800x600
 
         img, alpha, _, _ = process(img_path, alpha_path, bcount)
+        img = img[:, 12:-12]
+        alpha = alpha[:, 12:-12]
         trimap = gen_trimap(trimap_path)
+        trimap = trimap[:, 12:-12]
 
         # Flip array left to right randomly (prob=1:1)
         if np.random.random_sample() > 0.5:
-            img = np.fliplr(img)
+            img = np.fliplr(img).copy()
             trimap = np.fliplr(trimap).copy()
-            alpha = np.fliplr(alpha)
-
+            alpha = np.fliplr(alpha).copy()
+        '''
+        img [0..255]
+        alpha [0..1]
+        trimap [0..1]
+        '''
+        trimap[trimap == 0] = 0
+        trimap[trimap == 128] = 0.5
+        trimap[trimap == 255] = 1
         return self.transformer(img), alpha / 255.0, trimap, img_path
 
     def __len__(self):
@@ -190,6 +205,6 @@ def gen_names():
 if __name__ == "__main__":
     dataset = HADataset(split='train')
     dataloader = torch.utils.data.dataloader.DataLoader(
-        dataset, batch_size=8, shuffle=True, num_workers=16)
-    for i, (image, alpha, trimap) in enumerate(tqdm(dataloader)):
+        dataset, batch_size=2, shuffle=True)
+    for i, (_, image, alpha, trimap, _) in enumerate(tqdm(dataloader)):
         print(image.size(), alpha.size(), trimap.size())
