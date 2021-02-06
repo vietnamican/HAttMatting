@@ -6,14 +6,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+from torchsummary import summary
+from torch.utils.data.dataloader import DataLoader
 
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 
-from main import Model
-from torchsummary import summary
-from compose import compose
+from model import Model
 from utils import parse_args
+from data_human import HADataset
 
 global args
 args = parse_args()
@@ -22,7 +23,7 @@ args = parse_args()
 if __name__ == "__main__":
     pl.seed_everything(42)
     checkpoint_callback = ModelCheckpoint(
-        monitor='val_loss',
+        monitor='Validation Loss',
         dirpath='',
         filename='checkpoint-{epoch:02d}-{val_loss:.4f}',
         save_top_k=-1,
@@ -30,11 +31,19 @@ if __name__ == "__main__":
     )
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
 
-    model = compose(args.stage)
-    trainer = pl.Trainer(precision=16, gpus=1,
-                         benchmark=True, accumulate_grad_batches=4,
-                         progress_bar_refresh_rate=200,
-                         callbacks=[checkpoint_callback, lr_monitor]
-                         #  resume_from_checkpoint
-                         )
-    trainer.fit(model)
+    model = Model()
+    # print(type(model.hattmatting.discriminator.parameters()))
+    train_dataloader = DataLoader(
+        HADataset('train'), batch_size=2, shuffle=True, pin_memory=True, num_workers=2)
+    val_dataloader = DataLoader(HADataset(
+        'valid'), batch_size=2, shuffle=False, pin_memory=True, num_workers=2)
+    trainer = pl.Trainer(
+        # precision=16,
+        gpus=0,
+        benchmark=True, accumulate_grad_batches=4,
+        progress_bar_refresh_rate=200,
+        callbacks=[checkpoint_callback, lr_monitor],
+        fast_dev_run=True
+        #  resume_from_checkpoint
+    )
+    trainer.fit(model, train_dataloader, val_dataloader)

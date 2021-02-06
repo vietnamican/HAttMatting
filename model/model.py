@@ -7,7 +7,7 @@ from .hierarchical_attention import HierarchicalAttention
 from .discriminator import Discriminator
 
 
-class Model(Base):
+class HAttMatting(Base):
     def __init__(self):
         super().__init__()
         self.feature_extraction = FeatureExtraction()
@@ -17,8 +17,7 @@ class Model(Base):
 
     def forward(
         self,
-        x,
-        alpha_matte_true
+        x
     ):
         low_level, high_level = self.feature_extraction(x)
         low_level_size = low_level.shape[-2:]
@@ -28,6 +27,6 @@ class Model(Base):
         alpha_matte_pred = self.hierarchical_attention(low_level, high_level)
         input_size = x.shape[-2:]
         alpha_matte_pred = nn.Upsample(input_size, mode='bilinear', align_corners=True)(alpha_matte_pred)
-        out = self.discriminator(alpha_matte_pred)
+        # out = self.discriminator(x, alpha_matte_pred)
 
         return alpha_matte_pred

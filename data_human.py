@@ -46,9 +46,9 @@ def return_raw_image(dataset):
     return dataset_raw
 
 
-# bg_dataset = tfrecord_creator.read("bg", "./data/tfrecord/")
+bg_dataset = tfrecord_creator.read("bg", "./data/tfrecord/")
 # bg_dataset = tfrecord_creator.read("bg", "../data/bg/")
-bg_dataset = tfrecord_creator.read("bg", "/content/bg/")
+# bg_dataset = tfrecord_creator.read("bg", "/content/bg/")
 bg_dataset = list(bg_dataset)
 print("___________________")
 print(len(bg_dataset))

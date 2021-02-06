@@ -1,3 +1,3 @@
-from .model import Model
+from .index import Model
 
 __all__ = ['Model']
