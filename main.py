@@ -36,21 +36,7 @@ def load_trainer(logdir, device, max_epochs, checkpoint=None):
         mode='min',
         save_last=True
     )
-    recall_callback = ModelCheckpoint(
-        monitor='val_recall',
-        filename='checkpoint-{epoch:02d}-{val_recall:.4f}',
-        save_top_k=5,
-        mode='max',
-        save_last=True
-    )
-    precision_callback = ModelCheckpoint(
-        monitor='val_precision',
-        filename='checkpoint-{epoch:02d}-{val_precision:.4f}',
-        save_top_k=5,
-        mode='max',
-        save_last=True
-    )
-    callbacks = [loss_callback, recall_callback, precision_callback, lr_monitor]
+    callbacks = [loss_callback, lr_monitor]
     resume_from_checkpoint = checkpoint
     if device == 'tpu':
         trainer = pl.Trainer(
@@ -80,15 +66,16 @@ def load_trainer(logdir, device, max_epochs, checkpoint=None):
 
 def load_data():
     batch_size = config['batch_size']
-    data_root = '../datasets/'
+    data_root = '../datasets/aisegment/'
     train_dataset = MattingDataset(data_root, set_type='train')
     val_dataset = MattingDataset(data_root, set_type='val')
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=False)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=1, pin_memory=False)
+    train_dataset = RepeatDataset(train_dataset, 2)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=False)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=False)
     return train_dataloader, val_dataloader
 
 model = Model()
 
-trainer = load_trainer('test_logs', 'gpu', 100)
+trainer = load_trainer('full_size_logs', 'gpu', 100)
 train_dataloader, val_dataloader = load_data()
 trainer.fit(model, train_dataloader, val_dataloader)
