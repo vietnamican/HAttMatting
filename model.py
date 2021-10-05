@@ -66,7 +66,7 @@ class Model(Base):
 
     def configure_optimizers(self):
         lr = config['lr']
-        epoch = config['epoch']
+        epoch = config['renew_epoch']
         g_optmizer = optim.SGD(self.generator.parameters(), lr=lr, weight_decay=1e-5)
         g_scheduler = optim.lr_scheduler.CosineAnnealingLR(g_optmizer, T_max=epoch)
         d_optmizer = optim.SGD(self.discriminator.parameters(), lr=lr, weight_decay=1e-5)

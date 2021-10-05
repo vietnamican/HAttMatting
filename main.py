@@ -51,7 +51,7 @@ def load_trainer(logdir, device, max_epochs, checkpoint=None):
             max_epochs=max_epochs,
             logger=logger,
             callbacks=callbacks,
-            gpus=1,
+            gpus=[1],
             resume_from_checkpoint=resume_from_checkpoint
         )
     else:
@@ -66,7 +66,7 @@ def load_trainer(logdir, device, max_epochs, checkpoint=None):
 
 def load_data():
     batch_size = config['batch_size']
-    data_root = '../datasets/aisegment/'
+    data_root = '../datasets/matting_human_half/'
     train_dataset = MattingDataset(data_root, set_type='train')
     val_dataset = MattingDataset(data_root, set_type='val')
     train_dataset = RepeatDataset(train_dataset, 2)
@@ -75,7 +75,9 @@ def load_data():
     return train_dataloader, val_dataloader
 
 model = Model()
+checkpoint_path = 'log_logs/version_1/checkpoints/last.ckpt'
 
-trainer = load_trainer('full_size_logs', 'gpu', 100)
+epoch = config['epoch']
+trainer = load_trainer('log_logs', 'gpu', epoch, checkpoint=checkpoint_path)
 train_dataloader, val_dataloader = load_data()
 trainer.fit(model, train_dataloader, val_dataloader)

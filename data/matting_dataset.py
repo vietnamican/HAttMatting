@@ -25,14 +25,14 @@ transformer = {
     [
         A.HorizontalFlip(p=0.5),  ## Becareful when using that, because the keypoint is flipped but the index is flipped too
         A.Affine(scale=(-0.25, 0.25), translate_percent=(-0.125, 0.125), rotate=(-40, 40), mode=4, always_apply=False, p=0.5),
-        # A.RandomSizedCrop(min_max_height=[320, 600], width=320, height=320, p=0.5),
-        # A.Resize(320, 320),
+        A.RandomSizedCrop(min_max_height=[320, 600], width=320, height=320, p=0.5),
+        A.Resize(320, 320),
         A.Normalize(mean=mean, std=std),
         AP.ToTensorV2()
     ]),
     'val': A.Compose(
     [
-        # A.Resize(320, 320),
+        A.Resize(320, 320),
         A.Normalize(mean=mean, std=std),
         AP.ToTensorV2()
     ]),

@@ -23,5 +23,5 @@ class Model(Base):
         h_lv = F.upsample(h_lv, scale_factor=4, mode='bilinear')
         logit = self.acf(l_lv, h_lv)
         logit = F.upsample(logit, scale_factor=2, mode='bilinear')
-        return torch.sigmoid(logit)
+        return logit
 
